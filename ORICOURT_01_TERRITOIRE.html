@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module I — Situer Oricourt · Les Veilleurs d'Oricourt</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--stone:#15110b;--stone2:#1e1810;--panel:#241c12;--panel2:#2c2316;--gold:#c9a44a;--gold-l:#e3c987;--parch:#e8dcc0;
+--moss:#5f7345;--moss-l:#9bb36e;--blood:#8c2f2f;--blood-l:#c25a5a;--sky-l:#8fb4d6;--text:#ede4d2;--text-m:#b3a584;--text-d:#7a6e54;
+--line:rgba(201,164,74,.18);--line2:rgba(255,255,255,.06);--r:12px;--r-sm:8px;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--stone);color:var(--text);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 70% 50% at 50% -8%,rgba(201,164,74,.08) 0%,transparent 60%),
+  repeating-linear-gradient(0deg,transparent,transparent 38px,rgba(255,255,255,.012) 39px);}
+h1,h2,h3{font-family:'Cinzel',serif;}
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:12px;padding:11px 22px;
+  background:rgba(15,12,8,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+.back{background:rgba(255,255,255,.06);border:1px solid var(--line2);color:var(--text-m);padding:5px 13px;border-radius:20px;
+  font-size:.73rem;font-weight:600;text-decoration:none;transition:.18s;}
+.back:hover{background:rgba(255,255,255,.12);color:#fff;}
+.tb-t{font-family:'Cinzel',serif;font-weight:700;color:var(--gold-l);font-size:.92rem;}
+.tb-sp{flex:1;}
+.tb-xp{font-size:.74rem;color:var(--gold);background:rgba(201,164,74,.08);border:1px solid var(--line);padding:4px 11px;border-radius:20px;}
+.wrap{position:relative;z-index:1;max-width:820px;margin:0 auto;padding:0 22px 60px;}
+
+.hero{margin:26px 0 10px;padding:30px 26px;border-radius:16px;background:linear-gradient(135deg,rgba(36,28,18,.96),rgba(20,15,9,.96));border:1px solid var(--line);}
+.hero .k{font-size:.66rem;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:9px;}
+.hero h1{font-size:clamp(1.6rem,4vw,2.3rem);color:var(--parch);line-height:1.1;}
+.hero h1 span{color:var(--gold-l);}
+
+.pnj{display:flex;gap:14px;align-items:flex-start;background:rgba(140,47,47,.07);border:1px solid rgba(201,164,74,.25);
+  border-radius:14px;padding:16px 18px;margin:18px 0;}
+.pnj-av{width:52px;height:52px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.7rem;
+  background:radial-gradient(circle at 40% 30%,var(--gold-l),var(--blood));}
+.pnj-b .pn{font-family:'Cinzel',serif;font-weight:700;color:var(--gold-l);font-size:.92rem;margin-bottom:3px;}
+.pnj-b p{font-family:'EB Garamond',serif;font-size:1rem;color:var(--text);line-height:1.6;}
+.pnj-b em{color:var(--gold-l);font-style:italic;}
+
+.panel{background:var(--panel);border:1px solid var(--line2);border-radius:var(--r);padding:20px;margin:14px 0;border-left:3px solid var(--moss);}
+.panel h3{font-size:1.05rem;color:var(--gold-l);margin-bottom:9px;}
+.panel p{font-family:'EB Garamond',serif;font-size:1.02rem;color:var(--text-m);line-height:1.7;margin-bottom:9px;}
+.panel p strong{color:var(--text);} .panel p em{color:var(--moss-l);font-style:italic;}
+.fig{margin:12px 0;border-radius:10px;overflow:hidden;border:1px solid var(--line);}
+.fig img{width:100%;display:block;}
+.fig figcaption{font-size:.78rem;color:var(--text-d);padding:7px 11px;background:rgba(0,0,0,.25);font-style:italic;}
+.tts{background:rgba(201,164,74,.1);border:1px solid var(--line);color:var(--gold-l);border-radius:16px;padding:4px 11px;
+  font-size:.72rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:4px;}
+.tts:hover{background:rgba(201,164,74,.2);}
+.keybox{background:rgba(95,115,69,.08);border:1px solid rgba(95,115,69,.3);border-radius:8px;padding:11px 13px;margin-top:8px;font-size:.86rem;color:var(--moss-l);line-height:1.55;}
+.keybox b{color:var(--parch);}
+
+.sec-t{font-family:'Cinzel',serif;font-size:1.15rem;color:var(--parch);margin:28px 0 6px;display:flex;align-items:center;gap:9px;}
+.sec-t::before{content:'';width:18px;height:2px;background:var(--gold);}
+.quiz-q{background:var(--panel);border:1px solid var(--line2);border-radius:var(--r);padding:16px 18px;margin:11px 0;}
+.quiz-q .q{font-weight:600;font-size:.96rem;margin-bottom:10px;color:var(--text);}
+.opt{display:block;width:100%;text-align:left;background:rgba(255,255,255,.03);border:1px solid var(--line2);border-radius:8px;
+  padding:10px 13px;margin-bottom:7px;color:var(--text-m);cursor:pointer;font-size:.9rem;font-family:'DM Sans',sans-serif;transition:.15s;}
+.opt:hover{border-color:var(--gold);} .opt.ok{border-color:var(--moss);background:rgba(95,115,69,.12);color:var(--text);}
+.opt.no{border-color:var(--blood);background:rgba(140,47,47,.1);} .opt:disabled{cursor:default;}
+.fb{font-size:.85rem;line-height:1.5;margin-top:5px;padding:8px 11px;border-radius:7px;display:none;}
+.fb.ok{display:block;background:rgba(95,115,69,.12);border:1px solid rgba(95,115,69,.3);color:var(--moss-l);}
+.fb.no{display:block;background:rgba(140,47,47,.1);border:1px solid rgba(140,47,47,.3);color:var(--blood-l);}
+.write label{display:block;font-size:.88rem;color:var(--text-m);margin:6px 0 6px;font-weight:600;}
+.write textarea{width:100%;min-height:90px;background:rgba(0,0,0,.3);border:1px solid var(--line2);border-radius:8px;padding:11px;
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:.92rem;outline:none;resize:vertical;}
+.write textarea:focus{border-color:var(--gold);}
+.write .hint{font-size:.76rem;color:var(--text-d);margin-top:5px;}
+.validate{margin-top:22px;text-align:center;}
+.btn-val{background:linear-gradient(135deg,var(--gold),var(--gold-l));color:#241c12;border:none;padding:13px 30px;border-radius:10px;
+  font-size:.95rem;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn-val:disabled{opacity:.4;cursor:not-allowed;}
+.success{display:none;margin-top:18px;background:rgba(95,115,69,.1);border:1px solid rgba(95,115,69,.4);border-radius:12px;padding:22px;text-align:center;}
+.success.show{display:block;}
+.success .e{font-size:2.2rem;} .success h3{color:var(--moss-l);font-size:1.2rem;margin:6px 0;}
+.success .xp{color:var(--gold);font-weight:700;margin-bottom:8px;}
+.success p{font-family:'EB Garamond',serif;color:var(--text-m);line-height:1.6;font-style:italic;margin-bottom:14px;}
+.success a,.success button{display:inline-block;margin:0 5px;padding:10px 20px;border-radius:9px;font-weight:700;text-decoration:none;font-size:.85rem;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.success .go{background:var(--gold);color:#241c12;} .success .re{background:rgba(255,255,255,.07);color:var(--text-m);border:1px solid var(--line2);}
+.rgpd{font-size:.76rem;color:var(--text-d);margin-top:8px;line-height:1.5;}
+</style>
+</head>
+<body>
+<nav class="topbar">
+  <a class="back" href="../index.html">← Le hub</a>
+  <span class="tb-t">🗺️ Module I — Situer Oricourt</span>
+  <span class="tb-sp"></span>
+  <span class="tb-xp" id="tbXp">—</span>
+</nav>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="k">Module I · Histoire-géographie</div>
+    <h1>Situer <span>Oricourt</span></h1>
+  </div>
+
+  <div class="pnj">
+    <div class="pnj-av">🧔</div>
+    <div class="pnj-b"><div class="pn">Jehan le Veilleur</div>
+      <p id="introTxt">Avant d'entrer dans la forteresse, il faut savoir <em>où</em> elle se dresse — non sur une carte d'aujourd'hui, mais dans son vrai monde féodal. Suis-moi : on va replacer Oricourt dans son siècle et dans son pays. Tu verras, les pierres respirent mieux quand on les remet à leur place.</p>
+      <button class="tts" onclick="speakEl('introTxt')">🔊 Écouter</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>1. Pas « en Haute-Saône », mais dans le comté de Bourgogne</h3>
+    <p id="p1">La <strong>Haute-Saône</strong> est une création de la Révolution française, en <strong>1790</strong>. Au Moyen Âge, Oricourt n'existe pas « en Haute-Saône » : il appartient au <strong>comté de Bourgogne</strong>, qui deviendra la Franche-Comté.</p>
+    <p>Attention au piège : le <strong>comté</strong> de Bourgogne n'est pas le <strong>duché</strong> de Bourgogne. Le duché est lié au royaume de France ; le comté, lui, relève du <em>Saint-Empire romain germanique</em>. C'est un <strong>fief d'Empire</strong>. Dire « Oricourt, Haute-Saône », c'est pratique pour le GPS ; dire « Oricourt, comté de Bourgogne, fief d'Empire », c'est commencer à entendre les pierres respirer.</p>
+    <figure class="fig"><img src="../vue lointaine depuis les champs voisins.jpg" alt="Oricourt vu depuis les champs voisins" loading="lazy"><figcaption>Oricourt dominant la campagne — un château qui surveille son pays.</figcaption></figure>
+    <button class="tts" onclick="speakEl('p1')">🔊 Écouter</button>
+  </div>
+
+  <div class="panel">
+    <h3>2. Une terre de seuil, entre plusieurs mondes</h3>
+    <p id="p2">La Franche-Comté médiévale est une <strong>terre-frontière</strong> : pas une ligne nette avec une douane, mais une frontière <em>épaisse</em>, mouvante, pleine d'enclaves et de fidélités renégociées. Elle regarde vers la Lorraine, Montbéliard, l'Alsace et l'Empire d'un côté ; vers la Saône, la Bourgogne ducale et le royaume de France de l'autre.</p>
+    <p>Plus tard, cette région s'organisera autour du <strong>bailliage d'Amont</strong> (créé en 1333), dont <strong>Vesoul</strong> est la capitale et <strong>Gray</strong> un centre économique. C'est de ce vieux monde que la Haute-Saône héritera, bien après, en 1790.</p>
+    <figure class="fig"><img src="../vue aérienne.jpg" alt="Vue aérienne du château d'Oricourt" loading="lazy"><figcaption>Vue aérienne : Oricourt posé sur le bord de son plateau, face à la plaine.</figcaption></figure>
+    <button class="tts" onclick="speakEl('p2')">🔊 Écouter</button>
+  </div>
+
+  <div class="panel">
+    <h3>3. Pourquoi ce monde fabrique des châteaux</h3>
+    <p id="p3">Dans un espace politique aussi fragmenté, le château n'est pas un luxe : c'est un <strong>outil</strong>. Il sert à surveiller, protéger, taxer, impressionner, abriter les hommes, conserver les récoltes, rendre la justice et <strong>affirmer un lignage</strong>.</p>
+    <p>Oricourt naît justement là : édifié <strong>vers le milieu du XIIᵉ siècle</strong>, sur le bord d'un plateau, <strong>face à la plaine de Lure</strong>. Le château n'est pas posé sur le paysage : il est <em>arraché</em> au paysage — on y reviendra au module suivant.</p>
+    <div class="keybox">📌 <b>À retenir :</b> un château médiéval, c'est d'abord du pouvoir rendu visible. Sa place dans le territoire n'est jamais un hasard.</div>
+    <button class="tts" onclick="speakEl('p3')">🔊 Écouter</button>
+  </div>
+
+  <div class="panel">
+    <h3>4. Gaucher, et Oricourt dans le grand jeu</h3>
+    <p id="p4"><strong>Gaucher</strong>, <strong>connétable du comté de Bourgogne</strong>, est seigneur d'Oricourt <strong>vers 1170</strong>. Le mot « connétable » n'est pas décoratif : il dit la proximité avec le pouvoir militaire comtal. Oricourt n'est donc pas le château d'un petit hobereau isolé, mais une pièce dans une logique de pouvoir.</p>
+    <p>Plus tard, à la fin du Moyen Âge, le château appartiendra même à <strong>Nicolas Rolin</strong>, chancelier de Bourgogne et fondateur des Hospices de Beaune. Oricourt fait partie d'un <em>réseau</em> de places fortes (Vellexon, Vaire) : un château seul, c'est une dent ; plusieurs châteaux liés par un lignage, c'est une mâchoire.</p>
+    <button class="tts" onclick="speakEl('p4')">🔊 Écouter</button>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="sec-t">⚔️ Le test du Veilleur</div>
+  <div id="quiz"></div>
+
+  <!-- ÉCRIT -->
+  <div class="sec-t">✒️ Ta trace écrite</div>
+  <div class="quiz-q write">
+    <label id="wq">En une ou deux phrases : pourquoi est-il important de dire « Oricourt, comté de Bourgogne » plutôt que seulement « Oricourt, Haute-Saône » ?</label>
+    <textarea id="w1" placeholder="Écris ta réponse ici (sans mettre ton nom)…" oninput="checkReady()"></textarea>
+    <div class="hint">Cette réponse sera intégrée à ton carnet de visite. <button class="tts" onclick="speakEl('wq')">🔊 Écouter la question</button></div>
+  </div>
+  <div class="rgpd">⚠️ N'écris jamais ton nom, ni celui d'un camarade, dans tes réponses. Ton parcours reste anonyme.</div>
+
+  <div class="validate">
+    <button class="btn-val" id="valBtn" disabled onclick="validate()">⚜ Valider le module</button>
+    <div class="success" id="success">
+      <div class="e">🛡️</div><h3>Module validé : Situer Oricourt</h3>
+      <div class="xp" id="xpLine">+0 XP · Badge « Gardien du seuil »</div>
+      <p id="jehanFinal">Bien, veilleur. Tu sais désormais d'où parle Oricourt : un fief d'Empire au cœur d'une terre-frontière. Garde cela en tête — la suite, c'est la pierre elle-même.</p>
+      <a class="go" href="../index.html">⚜ Retour au hub</a>
+      <button class="re" onclick="location.reload()">↻ Rejouer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== Sauvegarde partagée (schéma du hub) ===== */
+const SAVE_KEY='oricourt_save';
+const LEVELS=[{min:0,max:200,name:'Novice du pont-levis'},{min:200,max:500,name:'Apprenti veilleur'},{min:500,max:900,name:'Explorateur de la basse-cour'},{min:900,max:1300,name:'Gardien de la haute-cour'},{min:1300,max:99999,name:'Maître des archives d\'Oricourt'}];
+const MOD={key:'territoire',maxXp:150,comps:['h_temps','h_espace'],badge:'GARDIEN_DU_SEUIL'};
+function nowISO(){ return new Date().toISOString().slice(0,19); }
+function emptySave(){ return {version:'ORICOURT_HUB_1.0',anonymous_id:'VEILLEUR_'+Math.random().toString(16).slice(2,6).toUpperCase(),created_at:nowISO(),updated_at:nowISO(),total_xp:0,level:LEVELS[0].name,modules:{},competencies:{},badges:[],mentor_comments:[],pdf_history:[]}; }
+function load(){ try{ var s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); return s&&s.version?s:emptySave(); }catch(e){ return emptySave(); } }
+function persist(){ S.updated_at=nowISO(); try{ localStorage.setItem(SAVE_KEY,JSON.stringify(S)); }catch(e){} }
+function levelFor(xp){ for(var i=LEVELS.length-1;i>=0;i--){ if(xp>=LEVELS[i].min) return LEVELS[i]; } return LEVELS[0]; }
+var S=load();
+document.getElementById('tbXp').textContent=(S.total_xp||0)+' XP';
+
+/* ===== Quiz ===== */
+const QUIZ=[
+  {q:"Au Moyen Âge, Oricourt appartient à…",opts:[
+     ["la Haute-Saône",false,"La Haute-Saône n'existe pas encore : elle est créée en 1790."],
+     ["le comté de Bourgogne (un fief d'Empire)",true,"Exact : le comté de Bourgogne, qui relève du Saint-Empire."],
+     ["le duché de Bourgogne, lié au royaume de France",false,"Piège classique : le comté n'est pas le duché. Oricourt est dans le COMTÉ, fief d'Empire."]]},
+  {q:"Le département de la Haute-Saône est créé en…",opts:[
+     ["1790, à la Révolution française",true,"Oui — c'est une création administrative moderne."],
+     ["au XIIᵉ siècle, avec le château",false,"Non : au XIIᵉ s. on est en plein comté de Bourgogne médiéval."],
+     ["en 1333, avec le bailliage d'Amont",false,"1333, c'est le bailliage d'Amont — une étape, mais pas le département."]]},
+  {q:"Le comté de Bourgogne relève de…",opts:[
+     ["le royaume de France",false,"Non : c'est le DUCHÉ qui est lié à la France. Le comté relève de l'Empire."],
+     ["le Saint-Empire romain germanique",true,"Exact — d'où une culture politique de marges et de fidélités multiples."],
+     ["le duché de Lorraine",false,"La Lorraine est voisine, mais le comté relève bien de l'Empire."]]},
+  {q:"Gaucher, seigneur d'Oricourt vers 1170, est…",opts:[
+     ["connétable du comté de Bourgogne",true,"Oui : proche du pouvoir militaire comtal. Oricourt n'est pas isolé."],
+     ["un simple paysan du village",false,"Non : « connétable » indique une fonction militaire de haut rang."],
+     ["le roi de France",false,"Non — on est dans le monde comtal, pas royal."]]}
+];
+var qState={};
+function renderQuiz(){
+  var c=document.getElementById('quiz'); c.innerHTML='';
+  QUIZ.forEach(function(item,qi){
+    var d=document.createElement('div'); d.className='quiz-q';
+    d.innerHTML='<div class="q">'+(qi+1)+'. '+item.q+'</div>'+
+      item.opts.map(function(o,oi){ return '<button class="opt" id="o'+qi+'_'+oi+'" onclick="answer('+qi+','+oi+')">'+o[0]+'</button>'; }).join('')+
+      '<div class="fb" id="fb'+qi+'"></div>';
+    c.appendChild(d);
+  });
+}
+function answer(qi,oi){
+  if(qState[qi]!==undefined) return;
+  var item=QUIZ[qi], ok=item.opts[oi][1];
+  qState[qi]=ok;
+  item.opts.forEach(function(o,j){ var b=document.getElementById('o'+qi+'_'+j); b.disabled=true; if(o[1]) b.className='opt ok'; });
+  if(!ok) document.getElementById('o'+qi+'_'+oi).className='opt no';
+  var fb=document.getElementById('fb'+qi); fb.className='fb '+(ok?'ok':'no'); fb.textContent=(ok?'✅ ':'❌ ')+item.opts[oi][2];
+  checkReady();
+}
+function correctCount(){ return Object.keys(qState).filter(function(k){return qState[k];}).length; }
+function allAnswered(){ return Object.keys(qState).length===QUIZ.length; }
+
+/* ===== Validation / écriture sauvegarde ===== */
+function checkReady(){
+  var w=document.getElementById('w1').value.trim().length>=10;
+  document.getElementById('valBtn').disabled=!(allAnswered()&&w);
+}
+function speakEl(id){ var el=document.getElementById(id); if(!el) return; try{ window.speechSynthesis.cancel(); var u=new SpeechSynthesisUtterance((el.textContent||'').trim()); u.lang='fr-FR'; u.rate=.98; window.speechSynthesis.speak(u); }catch(e){} }
+
+function validate(){
+  var d=S.modules[MOD.key]||{attempts:0,xp:0,best_score:0};
+  var first = d.status!=='validated';
+  d.attempts=(d.attempts||0)+1;
+  var score=Math.round(correctCount()/QUIZ.length*100);
+  d.score=score; d.best_score=Math.max(d.best_score||0,score);
+  d.status='validated'; d.validated_at=nowISO();
+  d.answers=[{question_id:'TERR_Q1',answer:document.getElementById('w1').value.trim(),score:1,attempt:d.attempts}];
+  var gained=0;
+  if(first){
+    gained=Math.min(MOD.maxXp, 100 + correctCount()*10 + (d.attempts===1?30:0));
+    d.xp=gained; S.total_xp=(S.total_xp||0)+gained;
+    MOD.comps.forEach(function(c){ S.competencies[c]=true; });
+    if((S.badges||[]).indexOf(MOD.badge)===-1){ S.badges.push(MOD.badge); S.total_xp+=50; }
+  } else if(score>(d.bestPrev||0)){
+    gained=30; S.total_xp+=30;
+  }
+  d.bestPrev=d.best_score;
+  S.modules[MOD.key]=d; S.level=levelFor(S.total_xp).name; persist();
+  document.getElementById('xpLine').textContent='+'+(first?d.xp+(/* badge */(S.badges.indexOf(MOD.badge)>-1?50:0)):gained)+' XP · Badge « Gardien du seuil »';
+  document.getElementById('jehanFinal').textContent = first
+    ? "Bien, veilleur. Tu sais désormais d'où parle Oricourt : un fief d'Empire au cœur d'une terre-frontière. Garde cela en tête — la suite, c'est la pierre elle-même."
+    : (score>= (d.best_score) ? "Tu as repris ce module et amélioré ta lecture. Reprendre n'est pas un échec : c'est une trace d'apprentissage. +30 XP de progrès." : "Tu as rejoué ce module. Ta meilleure version est conservée dans ton carnet.");
+  document.getElementById('valBtn').style.display='none';
+  document.getElementById('success').classList.add('show');
+  document.getElementById('tbXp').textContent=(S.total_xp||0)+' XP';
+  document.getElementById('success').scrollIntoView({behavior:'smooth'});
+}
+
+/* ===== Reprise si déjà validé ===== */
+(function init(){
+  renderQuiz();
+  var d=S.modules[MOD.key];
+  if(d&&d.answers&&d.answers[0]) document.getElementById('w1').value=d.answers[0].answer||'';
+  checkReady();
+})();
+</script>
+</body>
+</html>
