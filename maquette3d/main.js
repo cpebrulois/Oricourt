@@ -1778,10 +1778,13 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
     if (postes.length > 1 && !libreSur([postes[postes.length - 1].x, postes[postes.length - 1].y], [postes[0].x, postes[0].y])) postes.length = 1;
     return { trajet: R.trajet || 'marcher', postes };
   }
+  const HUMAINS_STUDIO = false;
   JEU.chargerVivants = () => {
     if (VIV.etat !== 'attente') return; VIV.etat = 'charge';
     annoncer('Les habitants de 1435 arrivent…');
-    const habitants = [
+    // HUMAINS_STUDIO : habitants habillés du Studio (désactivés le 11 novembre : postures jugées étranges ; on garde les
+    // figurines en attendant les modèles Meshy). Les bêtes restent animées.
+    const habitants = !HUMAINS_STUDIO ? [] : [
       ...JEU.pnj.map((p) => ({ id: p.id, desc: { ...p.studio, objetMarche: (ROUTINES[p.id] || {}).objetMarche }, act: p.activite, objet: p.g, routine: routineDe(p.id, [p.x, p.y]) })),
       ...figurants.map((f) => ({ id: f.id, desc: f.studio, act: f.activite, objet: f.g, routine: f.activite.marche ? null : routineDe(f.id, [f.g.position.x, -f.g.position.z]) })),
     ];
