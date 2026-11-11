@@ -1,1 +1,1504 @@
-{"source": "Studio de vie (habillage J50-J63), extrait pour Oricourt", "zones": ["torse", "bras", "avant_bras", "mains", "bassin", "cuisses", "jambes", "pieds"], "corps": [{"id": "humain_M", "race": "humain", "sexe": "M", "fichier": "corps_H.glb", "taille_m": 1.8, "hanches_pos": [-8.566802716813982e-05, 0.9540269374847412, 0.013085676357150078], "source": "H01", "pivots": {"Head": [0.0, 1.63703, 0.03938], "LeftShoulder": [0.0247, 1.45699, 0.04791], "RightShoulder": [-0.0247, 1.45699, 0.04791]}}, {"id": "humain_F", "race": "humain", "sexe": "F", "fichier": "corps_F.glb", "taille_m": 1.68, "hanches_pos": [-3.383780858712271e-05, 0.8903853893280029, 0.0006879756692796946], "source": "F01", "pivots": {"Head": [0.0, 1.52704, 0.03725], "LeftShoulder": [0.02167, 1.37635, 0.04189], "RightShoulder": [-0.02167, 1.37635, 0.04189]}}, {"id": "nain_M", "race": "nain", "sexe": "M", "base": "humain_M", "cle_race": "race_nain", "taille_m": 1.396, "os": {"Hips": [-9e-05, 0.63157, 0.01309], "Spine02": [-9e-05, 0.79356, 0.03636], "Spine01": [-9e-05, 0.94835, 0.02288], "Spine": [-9e-05, 1.07992, 0.00182], "neck": [-9e-05, 1.11232, -0.00341], "Head": [-9e-05, 1.17532, 0.05082], "LeftShoulder": [-9e-05, 1.07992, 0.00182], "LeftArm": [0.20888, 1.07992, 0.00199], "LeftForeArm": [0.31242, 0.84234, 0.00641], "LeftHand": [0.38884, 0.62635, 0.09961], "RightShoulder": [-9e-05, 1.07992, 0.00182], "RightArm": [-0.20889, 1.07992, 0.00189], "RightForeArm": [-0.31259, 0.84234, 0.00654], "RightHand": [-0.38887, 0.62635, 0.09948], "LeftUpLeg": [0.11079, 0.60458, 0.00929], "LeftLeg": [0.13519, 0.34539, -0.0034], "LeftFoot": [0.16405, 0.09989, -0.02354], "LeftToeBase": [0.16405, 0.03862, 0.07397], "RightUpLeg": [-0.11096, 0.60458, 0.00929], "RightLeg": [-0.13524, 0.34539, -0.00364], "RightFoot": [-0.16411, 0.09989, -0.0235], "RightToeBase": [-0.16411, 0.03862, 0.07396]}, "cles": {"visage_nez_largeur": 0.7, "visage_nez_projection": 0.5, "visage_machoire_largeur": 0.6, "visage_pommettes_largeur": 0.3}, "source": "H01 + race naine J50", "pivots": {"Head": [0.0, 1.23458, 0.02213], "LeftShoulder": [0.02717, 1.09192, 0.05525], "RightShoulder": [-0.02717, 1.09192, 0.05525]}}, {"id": "nain_F", "race": "nain", "sexe": "F", "base": "humain_F", "cle_race": "race_nain", "taille_m": 1.303, "os": {"Hips": [-3e-05, 0.58962, 0.00069], "Spine02": [-3e-05, 0.7408, 0.05174], "Spine01": [-3e-05, 0.88527, 0.04808], "Spine": [-3e-05, 1.00807, 0.01277], "neck": [-3e-05, 1.03831, 0.00724], "Head": [-3e-05, 1.09711, 0.05619], "LeftShoulder": [-3e-05, 1.00807, 0.01277], "LeftArm": [0.18335, 1.00807, 0.00128], "LeftForeArm": [0.2764, 0.79453, 0.00525], "LeftHand": [0.35068, 0.5846, 0.09584], "RightShoulder": [-3e-05, 1.00807, 0.01277], "RightArm": [-0.18343, 1.00807, 0.00123], "RightForeArm": [-0.27659, 0.79464, 0.00541], "RightHand": [-0.35067, 0.58487, 0.09567], "LeftUpLeg": [0.10345, 0.5643, -0.00432], "LeftLeg": [0.11326, 0.3224, -0.00717], "LeftFoot": [0.12448, 0.09327, -0.01735], "LeftToeBase": [0.12448, 0.03608, 0.07432], "RightUpLeg": [-0.10351, 0.5643, -0.00432], "RightLeg": [-0.11345, 0.3224, -0.00729], "RightFoot": [-0.12465, 0.09327, -0.01734], "RightToeBase": [-0.12465, 0.03608, 0.07378]}, "cles": {"visage_nez_largeur": 0.7, "visage_nez_projection": 0.5, "visage_machoire_largeur": 0.6, "visage_pommettes_largeur": 0.3}, "source": "F01 + race naine J50", "pivots": {"Head": [0.0, 1.15155, 0.02293], "LeftShoulder": [0.02384, 1.02407, 0.05023], "RightShoulder": [-0.02384, 1.02407, 0.05023]}}], "teintes_defaut": {"etoffe": "#7a6a48", "laine": "#5a4a38", "cuir": "#6a4a2a", "blason": "#2a3a7a", "metal": "#b8b8b8", "cheveux": "#4a2f1d"}, "pieces": {"tunique": {"fichiers": {"M": "pieces/tunique_H.glb", "F": "pieces/tunique_F.glb"}, "masque": ["torse", "bras", "bassin"], "teintes": {"principal": "etoffe", "ornement": "blason"}, "matiere": "lin", "salissure": [0.25, 0.35], "usure": 0.35, "plis": [1.0, 1.0]}, "chausses": {"fichiers": {"M": "pieces/chausses_H.glb", "F": "pieces/chausses_F.glb"}, "masque": ["bassin", "cuisses", "jambes"], "teintes": {"secondaire": "laine"}, "matiere": "laine", "salissure": [0.45, 0.5], "usure": 0.2}, "bottes": {"fichiers": {"M": "pieces/bottes_H.glb", "F": "pieces/bottes_F.glb"}, "masque": ["pieds"], "teintes": {"cuir": "cuir"}, "matiere": "cuir", "salissure": [0.18, 0.6], "usure": 0.4}, "ceinture": {"fichiers": {"M": "pieces/ceinture_H.glb", "F": "pieces/ceinture_F.glb"}, "masque": [], "teintes": {"cuir": "cuir", "ornement": "metal"}, "matiere": "cuir", "usure": 0.3}, "ceinture_large": {"fichiers": {"M": "pieces/ceinture_large_H.glb", "F": "pieces/ceinture_large_F.glb"}, "masque": [], "teintes": {"cuir": "cuir", "ornement": "metal"}, "matiere": "cuir", "usure": 0.3}, "bourse": {"fichiers": {"M": "pieces/bourse_H.glb", "F": "pieces/bourse_F.glb"}, "masque": [], "teintes": {"cuir": "cuir"}, "matiere": "cuir", "usure": 0.3}, "gambison": {"fichiers": {"M": "pieces/gambison_H.glb", "F": "pieces/gambison_F.glb"}, "masque": ["torse", "bras", "avant_bras", "bassin"], "teintes": {"principal": "etoffe", "ornement": "cuir"}, "matiere": "toile", "salissure": [0.25, 0.35], "usure": 0.3, "plis": [0.55, 0.5]}, "haubert": {"fichiers": {"M": "pieces/haubert_H.glb", "F": "pieces/haubert_F.glb"}, "masque": ["torse", "bras", "avant_bras", "bassin"], "teintes": {"cuir": "cuir"}, "metal": 0.45, "matiere": "mailles", "matiere_b": "cuir", "acier": 0.65, "rugosite": 0.45, "salissure": [0.2, 0.25], "jupe_sous": {"piece": "surcot", "sous_m": 0.06, "axe_m": 0.03}, "plis": [0.45, 0.35]}, "surcot": {"fichiers": {"M": "pieces/surcot_H.glb", "F": "pieces/surcot_F.glb"}, "masque": [], "teintes": {"principal": "blason", "secondaire": "etoffe", "ornement": "laine"}, "matiere": "laine", "salissure": [0.3, 0.45], "usure": 0.35, "plis": [0.9, 0.0]}, "coupe_courte": {"fichiers": {"M": "pieces/coupe_courte_H.glb", "F": "pieces/coupe_courte_F.glb"}, "masque": [], "teintes": {"principal": "cheveux"}, "cheveux": true}, "coupe_mi_longue": {"fichiers": {"M": "pieces/coupe_mi_longue_H.glb", "F": "pieces/coupe_mi_longue_F.glb"}, "masque": [], "teintes": {"principal": "cheveux"}, "cheveux": true}, "coupe_longue": {"fichiers": {"M": "pieces/coupe_longue_H.glb", "F": "pieces/coupe_longue_F.glb"}, "masque": [], "teintes": {"principal": "cheveux"}, "cheveux": true}, "barbe": {"fichiers": {"M": "pieces/barbe_H.glb", "F": "pieces/barbe_F.glb"}, "masque": [], "teintes": {"principal": "cheveux"}, "cheveux": true}}}
+{
+ "format": "studio-personnages3d-habillage",
+ "version_format": 1,
+ "description": "Habillage modulaire du héros (J50) : corps de base H01/F01 (Blender Human Base Meshes 1.4.1, Dan Ulrich, CC0, repris par l’atelier puis par Claude), pièces de tenue séparées, teintures par masque, clips de J45 reciblés. J51 : matières de détail (trame, sergé, grain, anneaux), salissure et usure, surcot droit fendu, lisière des cheveux.",
+ "repere": "glTF : Y vers le haut, regard vers +Z, mètres, pieds au sol ; os à orientation de repos neutre (identité), noms du squelette Meshy de J45",
+ "squelettes": {
+  "meshy": {
+   "os": [
+    "Hips",
+    "Spine",
+    "Spine01",
+    "Spine02",
+    "neck",
+    "Head",
+    "LeftShoulder",
+    "LeftArm",
+    "LeftForeArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightArm",
+    "RightForeArm",
+    "RightHand",
+    "LeftUpLeg",
+    "LeftLeg",
+    "LeftFoot",
+    "LeftToeBase",
+    "RightUpLeg",
+    "RightLeg",
+    "RightFoot",
+    "RightToeBase"
+   ],
+   "emplacements": {
+    "main_d": {
+     "os": "RightHand",
+     "vers": "RightForeArm",
+     "fraction": -0.32,
+     "axe_y": [
+      0,
+      0,
+      1
+     ],
+     "axe_z": [
+      -1,
+      0,
+      0
+     ]
+    },
+    "main_g": {
+     "os": "LeftHand",
+     "vers": "LeftForeArm",
+     "fraction": -0.32,
+     "axe_y": [
+      0,
+      1,
+      0
+     ],
+     "axe_z": [
+      -1,
+      0,
+      0
+     ]
+    },
+    "bras_g": {
+     "os": "LeftForeArm",
+     "vers": "LeftHand",
+     "fraction": 0.5,
+     "decalage": [
+      0.06,
+      0,
+      0
+     ],
+     "axe_y": [
+      0,
+      1,
+      0
+     ],
+     "axe_z": [
+      1,
+      0,
+      0
+     ]
+    },
+    "dos": {
+     "os": "Spine02",
+     "decalage": [
+      0,
+      0,
+      -0.17
+     ],
+     "axe_y": [
+      0.45,
+      0.89,
+      0
+     ],
+     "axe_z": [
+      0,
+      0,
+      -1
+     ]
+    },
+    "dos2": {
+     "os": "Spine02",
+     "decalage": [
+      0,
+      0.02,
+      -0.2
+     ],
+     "axe_y": [
+      -0.45,
+      0.89,
+      0
+     ],
+     "axe_z": [
+      0,
+      0,
+      -1
+     ]
+    },
+    "hanche_g": {
+     "os": "Hips",
+     "decalage": [
+      0.17,
+      -0.02,
+      0.02
+     ],
+     "axe_y": [
+      0.2,
+      -0.72,
+      -0.66
+     ],
+     "axe_z": [
+      1,
+      0,
+      0
+     ]
+    },
+    "hanche_d": {
+     "os": "Hips",
+     "decalage": [
+      -0.17,
+      -0.02,
+      0.02
+     ],
+     "axe_y": [
+      -0.2,
+      -0.72,
+      -0.66
+     ],
+     "axe_z": [
+      -1,
+      0,
+      0
+     ]
+    },
+    "poitrine": {
+     "os": "Spine02",
+     "decalage": [
+      0,
+      0.1,
+      0.13
+     ],
+     "axe_y": [
+      0,
+      1,
+      0
+     ],
+     "axe_z": [
+      0,
+      0,
+      1
+     ]
+    }
+   }
+  }
+ },
+ "zones": [
+  "torse",
+  "bras",
+  "avant_bras",
+  "mains",
+  "bassin",
+  "cuisses",
+  "jambes",
+  "pieds"
+ ],
+ "clips": {
+  "fichier": "clips.glb",
+  "hanches_pos": [
+   -8.566802716813982e-05,
+   0.9540269374847412,
+   0.013085676357150078
+  ],
+  "jeux": {
+   "guerrier": {
+    "source": "humain_guerrier_m"
+   },
+   "paladin": {
+    "base": "guerrier",
+    "source": "humain_paladin_m",
+    "calages": {
+     "attente_combat": {
+      "main_d": {
+       "axe_y": [
+        0.05,
+        0.96,
+        0.28
+       ],
+       "axe_z": [
+        0,
+        -0.28,
+        0.96
+       ]
+      },
+      "bras_g": {
+       "axe_y": [
+        0,
+        1,
+        0
+       ],
+       "axe_z": [
+        0,
+        0,
+        1
+       ]
+      }
+     }
+    }
+   },
+   "rodeuse": {
+    "source": "elfe_rodeuse_f"
+   },
+   "magicienne": {
+    "source": "humaine_magicienne_f",
+    "alias_clips": {
+     "attente_combat": "attente"
+    }
+   },
+   "nain": {
+    "source": "nain_clerc_m"
+   }
+  },
+  "calages_communs": {
+   "attente_combat": {
+    "bras_g": {
+     "axe_y": [
+      0,
+      1,
+      0
+     ],
+     "axe_z": [
+      0,
+      0,
+      1
+     ]
+    }
+   }
+  },
+  "clavicules": {
+   "seuil_deg": 4,
+   "garde": 0.25
+  },
+  "bras_attente": {
+   "cible_deg": 9,
+   "clips": [
+    "attente"
+   ]
+  }
+ },
+ "corps": [
+  {
+   "id": "humain_M",
+   "race": "humain",
+   "sexe": "M",
+   "fichier": "corps_H.glb",
+   "taille_m": 1.8,
+   "hanches_pos": [
+    -8.566802716813982e-05,
+    0.9540269374847412,
+    0.013085676357150078
+   ],
+   "source": "H01",
+   "pivots": {
+    "Head": [
+     0.0,
+     1.63703,
+     0.03938
+    ],
+    "LeftShoulder": [
+     0.0247,
+     1.45699,
+     0.04791
+    ],
+    "RightShoulder": [
+     -0.0247,
+     1.45699,
+     0.04791
+    ]
+   }
+  },
+  {
+   "id": "humain_F",
+   "race": "humain",
+   "sexe": "F",
+   "fichier": "corps_F.glb",
+   "taille_m": 1.68,
+   "hanches_pos": [
+    -3.383780858712271e-05,
+    0.8903853893280029,
+    0.0006879756692796946
+   ],
+   "source": "F01",
+   "pivots": {
+    "Head": [
+     0.0,
+     1.52704,
+     0.03725
+    ],
+    "LeftShoulder": [
+     0.02167,
+     1.37635,
+     0.04189
+    ],
+    "RightShoulder": [
+     -0.02167,
+     1.37635,
+     0.04189
+    ]
+   }
+  },
+  {
+   "id": "nain_M",
+   "race": "nain",
+   "sexe": "M",
+   "base": "humain_M",
+   "cle_race": "race_nain",
+   "taille_m": 1.396,
+   "os": {
+    "Hips": [
+     -9e-05,
+     0.63157,
+     0.01309
+    ],
+    "Spine02": [
+     -9e-05,
+     0.79356,
+     0.03636
+    ],
+    "Spine01": [
+     -9e-05,
+     0.94835,
+     0.02288
+    ],
+    "Spine": [
+     -9e-05,
+     1.07992,
+     0.00182
+    ],
+    "neck": [
+     -9e-05,
+     1.11232,
+     -0.00341
+    ],
+    "Head": [
+     -9e-05,
+     1.17532,
+     0.05082
+    ],
+    "LeftShoulder": [
+     -9e-05,
+     1.07992,
+     0.00182
+    ],
+    "LeftArm": [
+     0.20888,
+     1.07992,
+     0.00199
+    ],
+    "LeftForeArm": [
+     0.31242,
+     0.84234,
+     0.00641
+    ],
+    "LeftHand": [
+     0.38884,
+     0.62635,
+     0.09961
+    ],
+    "RightShoulder": [
+     -9e-05,
+     1.07992,
+     0.00182
+    ],
+    "RightArm": [
+     -0.20889,
+     1.07992,
+     0.00189
+    ],
+    "RightForeArm": [
+     -0.31259,
+     0.84234,
+     0.00654
+    ],
+    "RightHand": [
+     -0.38887,
+     0.62635,
+     0.09948
+    ],
+    "LeftUpLeg": [
+     0.11079,
+     0.60458,
+     0.00929
+    ],
+    "LeftLeg": [
+     0.13519,
+     0.34539,
+     -0.0034
+    ],
+    "LeftFoot": [
+     0.16405,
+     0.09989,
+     -0.02354
+    ],
+    "LeftToeBase": [
+     0.16405,
+     0.03862,
+     0.07397
+    ],
+    "RightUpLeg": [
+     -0.11096,
+     0.60458,
+     0.00929
+    ],
+    "RightLeg": [
+     -0.13524,
+     0.34539,
+     -0.00364
+    ],
+    "RightFoot": [
+     -0.16411,
+     0.09989,
+     -0.0235
+    ],
+    "RightToeBase": [
+     -0.16411,
+     0.03862,
+     0.07396
+    ]
+   },
+   "cles": {
+    "visage_nez_largeur": 0.7,
+    "visage_nez_projection": 0.5,
+    "visage_machoire_largeur": 0.6,
+    "visage_pommettes_largeur": 0.3
+   },
+   "source": "H01 + race naine J50",
+   "pivots": {
+    "Head": [
+     0.0,
+     1.23458,
+     0.02213
+    ],
+    "LeftShoulder": [
+     0.02717,
+     1.09192,
+     0.05525
+    ],
+    "RightShoulder": [
+     -0.02717,
+     1.09192,
+     0.05525
+    ]
+   }
+  },
+  {
+   "id": "nain_F",
+   "race": "nain",
+   "sexe": "F",
+   "base": "humain_F",
+   "cle_race": "race_nain",
+   "taille_m": 1.303,
+   "os": {
+    "Hips": [
+     -3e-05,
+     0.58962,
+     0.00069
+    ],
+    "Spine02": [
+     -3e-05,
+     0.7408,
+     0.05174
+    ],
+    "Spine01": [
+     -3e-05,
+     0.88527,
+     0.04808
+    ],
+    "Spine": [
+     -3e-05,
+     1.00807,
+     0.01277
+    ],
+    "neck": [
+     -3e-05,
+     1.03831,
+     0.00724
+    ],
+    "Head": [
+     -3e-05,
+     1.09711,
+     0.05619
+    ],
+    "LeftShoulder": [
+     -3e-05,
+     1.00807,
+     0.01277
+    ],
+    "LeftArm": [
+     0.18335,
+     1.00807,
+     0.00128
+    ],
+    "LeftForeArm": [
+     0.2764,
+     0.79453,
+     0.00525
+    ],
+    "LeftHand": [
+     0.35068,
+     0.5846,
+     0.09584
+    ],
+    "RightShoulder": [
+     -3e-05,
+     1.00807,
+     0.01277
+    ],
+    "RightArm": [
+     -0.18343,
+     1.00807,
+     0.00123
+    ],
+    "RightForeArm": [
+     -0.27659,
+     0.79464,
+     0.00541
+    ],
+    "RightHand": [
+     -0.35067,
+     0.58487,
+     0.09567
+    ],
+    "LeftUpLeg": [
+     0.10345,
+     0.5643,
+     -0.00432
+    ],
+    "LeftLeg": [
+     0.11326,
+     0.3224,
+     -0.00717
+    ],
+    "LeftFoot": [
+     0.12448,
+     0.09327,
+     -0.01735
+    ],
+    "LeftToeBase": [
+     0.12448,
+     0.03608,
+     0.07432
+    ],
+    "RightUpLeg": [
+     -0.10351,
+     0.5643,
+     -0.00432
+    ],
+    "RightLeg": [
+     -0.11345,
+     0.3224,
+     -0.00729
+    ],
+    "RightFoot": [
+     -0.12465,
+     0.09327,
+     -0.01734
+    ],
+    "RightToeBase": [
+     -0.12465,
+     0.03608,
+     0.07378
+    ]
+   },
+   "cles": {
+    "visage_nez_largeur": 0.7,
+    "visage_nez_projection": 0.5,
+    "visage_machoire_largeur": 0.6,
+    "visage_pommettes_largeur": 0.3
+   },
+   "source": "F01 + race naine J50",
+   "pivots": {
+    "Head": [
+     0.0,
+     1.15155,
+     0.02293
+    ],
+    "LeftShoulder": [
+     0.02384,
+     1.02407,
+     0.05023
+    ],
+    "RightShoulder": [
+     -0.02384,
+     1.02407,
+     0.05023
+    ]
+   }
+  }
+ ],
+ "tenues": {
+  "defaut": "vetements",
+  "par_categorie": {
+   "robe": "vetements",
+   "vetements": "vetements",
+   "legere": "gambison",
+   "intermediaire": "mailles",
+   "lourde": "mailles"
+  },
+  "par_armure": {
+   "armure_matelassee": "gambison",
+   "armure_cuir": "gambison",
+   "armure_cuir_cloute": "gambison",
+   "chemise_mailles": "mailles",
+   "cotte_mailles": "mailles"
+  },
+  "ensembles": {
+   "vetements": {
+    "nom": "Tunique, chausses, bottes, ceinture et bourse",
+    "pieces": [
+     "tunique",
+     "chausses",
+     "bottes",
+     "ceinture",
+     "bourse"
+    ]
+   },
+   "gambison": {
+    "nom": "Gambison (armure matelassée)",
+    "pieces": [
+     "gambison",
+     "chausses",
+     "bottes",
+     "ceinture_large"
+    ]
+   },
+   "mailles": {
+    "nom": "Cotte de mailles et surcot",
+    "pieces": [
+     "haubert",
+     "surcot",
+     "chausses",
+     "bottes",
+     "ceinture_large"
+    ]
+   }
+  }
+ },
+ "pieces": {
+  "tunique": {
+   "fichiers": {
+    "M": "pieces/tunique_H.glb",
+    "F": "pieces/tunique_F.glb"
+   },
+   "masque": [
+    "torse",
+    "bras",
+    "bassin"
+   ],
+   "teintes": {
+    "principal": "etoffe",
+    "ornement": "blason"
+   },
+   "matiere": "lin",
+   "salissure": [
+    0.25,
+    0.35
+   ],
+   "usure": 0.35,
+   "plis": [
+    1.0,
+    1.0
+   ]
+  },
+  "chausses": {
+   "fichiers": {
+    "M": "pieces/chausses_H.glb",
+    "F": "pieces/chausses_F.glb"
+   },
+   "masque": [
+    "bassin",
+    "cuisses",
+    "jambes"
+   ],
+   "teintes": {
+    "secondaire": "laine"
+   },
+   "matiere": "laine",
+   "salissure": [
+    0.45,
+    0.5
+   ],
+   "usure": 0.2
+  },
+  "bottes": {
+   "fichiers": {
+    "M": "pieces/bottes_H.glb",
+    "F": "pieces/bottes_F.glb"
+   },
+   "masque": [
+    "pieds"
+   ],
+   "teintes": {
+    "cuir": "cuir"
+   },
+   "matiere": "cuir",
+   "salissure": [
+    0.18,
+    0.6
+   ],
+   "usure": 0.4
+  },
+  "ceinture": {
+   "fichiers": {
+    "M": "pieces/ceinture_H.glb",
+    "F": "pieces/ceinture_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "cuir": "cuir",
+    "ornement": "metal"
+   },
+   "matiere": "cuir",
+   "usure": 0.3
+  },
+  "ceinture_large": {
+   "fichiers": {
+    "M": "pieces/ceinture_large_H.glb",
+    "F": "pieces/ceinture_large_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "cuir": "cuir",
+    "ornement": "metal"
+   },
+   "matiere": "cuir",
+   "usure": 0.3
+  },
+  "bourse": {
+   "fichiers": {
+    "M": "pieces/bourse_H.glb",
+    "F": "pieces/bourse_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "cuir": "cuir"
+   },
+   "matiere": "cuir",
+   "usure": 0.3
+  },
+  "gambison": {
+   "fichiers": {
+    "M": "pieces/gambison_H.glb",
+    "F": "pieces/gambison_F.glb"
+   },
+   "masque": [
+    "torse",
+    "bras",
+    "avant_bras",
+    "bassin"
+   ],
+   "teintes": {
+    "principal": "etoffe",
+    "ornement": "cuir"
+   },
+   "matiere": "toile",
+   "salissure": [
+    0.25,
+    0.35
+   ],
+   "usure": 0.3,
+   "plis": [
+    0.55,
+    0.5
+   ]
+  },
+  "haubert": {
+   "fichiers": {
+    "M": "pieces/haubert_H.glb",
+    "F": "pieces/haubert_F.glb"
+   },
+   "masque": [
+    "torse",
+    "bras",
+    "avant_bras",
+    "bassin"
+   ],
+   "teintes": {
+    "cuir": "cuir"
+   },
+   "metal": 0.45,
+   "matiere": "mailles",
+   "matiere_b": "cuir",
+   "acier": 0.65,
+   "rugosite": 0.45,
+   "salissure": [
+    0.2,
+    0.25
+   ],
+   "jupe_sous": {
+    "piece": "surcot",
+    "sous_m": 0.06,
+    "axe_m": 0.03
+   },
+   "plis": [
+    0.45,
+    0.35
+   ]
+  },
+  "surcot": {
+   "fichiers": {
+    "M": "pieces/surcot_H.glb",
+    "F": "pieces/surcot_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "blason",
+    "secondaire": "etoffe",
+    "ornement": "laine"
+   },
+   "matiere": "laine",
+   "salissure": [
+    0.3,
+    0.45
+   ],
+   "usure": 0.35,
+   "plis": [
+    0.9,
+    0.0
+   ]
+  },
+  "coupe_courte": {
+   "fichiers": {
+    "M": "pieces/coupe_courte_H.glb",
+    "F": "pieces/coupe_courte_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true
+  },
+  "coupe_mi_longue": {
+   "fichiers": {
+    "M": "pieces/coupe_mi_longue_H.glb",
+    "F": "pieces/coupe_mi_longue_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true
+  },
+  "coupe_longue": {
+   "fichiers": {
+    "M": "pieces/coupe_longue_H.glb",
+    "F": "pieces/coupe_longue_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true
+  },
+  "barbe": {
+   "fichiers": {
+    "M": "pieces/barbe_H.glb",
+    "F": "pieces/barbe_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true
+  },
+  "coiffure_courte": {
+   "fichiers": {
+    "M": "pieces/cartes/courte_H.glb",
+    "F": "pieces/cartes/courte_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Courte",
+   "categorie": "coupe",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63",
+   "longueur": "courte"
+  },
+  "coiffure_raie_cote": {
+   "fichiers": {
+    "M": "pieces/cartes/raie_cote_H.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Raie de côté",
+   "categorie": "coupe",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63",
+   "longueur": "courte"
+  },
+  "coiffure_rasee_cotes": {
+   "fichiers": {
+    "M": "pieces/cartes/rasee_cotes_H.glb",
+    "F": "pieces/cartes/rasee_cotes_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Rasée sur les côtés",
+   "categorie": "coupe",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63",
+   "longueur": "courte",
+   "cuir": [
+    0.97,
+    0.8,
+    0,
+    0.05
+   ]
+  },
+  "coiffure_carre": {
+   "fichiers": {
+    "F": "pieces/cartes/carre_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Carré",
+   "categorie": "coupe",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63",
+   "longueur": "mi_longue"
+  },
+  "coiffure_mi_longue": {
+   "fichiers": {
+    "M": "pieces/cartes/mi_longue_H.glb",
+    "F": "pieces/cartes/mi_longue_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Mi-longue",
+   "categorie": "coupe",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63",
+   "longueur": "mi_longue"
+  },
+  "coiffure_boucles": {
+   "fichiers": {
+    "M": "pieces/cartes/boucles_H.glb",
+    "F": "pieces/cartes/boucles_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Boucles",
+   "categorie": "coupe",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63",
+   "longueur": "mi_longue"
+  },
+  "coiffure_longue": {
+   "fichiers": {
+    "M": "pieces/cartes/longue_H.glb",
+    "F": "pieces/cartes/longue_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Longue détachée",
+   "categorie": "coupe",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63",
+   "longueur": "longue"
+  },
+  "coiffure_queue": {
+   "fichiers": {
+    "M": "pieces/cartes/queue_H.glb",
+    "F": "pieces/cartes/queue_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Queue",
+   "categorie": "coupe",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63",
+   "longueur": "longue"
+  },
+  "coiffure_tresse": {
+   "fichiers": {
+    "M": "pieces/cartes/tresse_H.glb",
+    "F": "pieces/cartes/tresse_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Tresse",
+   "categorie": "coupe",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63",
+   "longueur": "longue"
+  },
+  "coiffure_nattes": {
+   "fichiers": {
+    "M": "pieces/cartes/nattes_H.glb",
+    "F": "pieces/cartes/nattes_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Deux nattes",
+   "categorie": "coupe",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63",
+   "longueur": "longue"
+  },
+  "coiffure_chignon": {
+   "fichiers": {
+    "M": "pieces/cartes/chignon_H.glb",
+    "F": "pieces/cartes/chignon_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Chignon",
+   "categorie": "coupe",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63",
+   "longueur": "attachee"
+  },
+  "coiffure_tonsure": {
+   "fichiers": {
+    "M": "pieces/cartes/tonsure_H.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Tonsure",
+   "categorie": "coupe",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63",
+   "longueur": "courte",
+   "cuir": [
+    0.97,
+    0.7,
+    24,
+    0
+   ]
+  },
+  "coiffure_crane_rase": {
+   "fichiers": {
+    "M": "pieces/cartes/crane_rase_H.glb",
+    "F": "pieces/cartes/crane_rase_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Crâne rasé",
+   "categorie": "coupe",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63",
+   "longueur": "rase",
+   "cuir": [
+    0.0,
+    0.8,
+    0,
+    0
+   ]
+  },
+  "barbe_courte": {
+   "fichiers": {
+    "M": "pieces/cartes/barbe_courte_H.glb",
+    "F": "pieces/cartes/barbe_courte_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Barbe courte",
+   "categorie": "barbe",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63",
+   "fond_peau": 0.85
+  },
+  "barbe_pleine": {
+   "fichiers": {
+    "M": "pieces/cartes/barbe_pleine_H.glb",
+    "F": "pieces/cartes/barbe_pleine_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Barbe pleine",
+   "categorie": "barbe",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63",
+   "fond_peau": 0.6
+  },
+  "moustache": {
+   "fichiers": {
+    "M": "pieces/cartes/moustache_H.glb",
+    "F": "pieces/cartes/moustache_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Moustache",
+   "categorie": "barbe",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63"
+  },
+  "barbe_longue": {
+   "fichiers": {
+    "M": "pieces/cartes/barbe_longue_H.glb",
+    "F": "pieces/cartes/barbe_longue_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Barbe longue",
+   "categorie": "barbe",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63",
+   "fond_peau": 0.6
+  },
+  "sourcils": {
+   "fichiers": {
+    "M": "pieces/cartes/sourcils_H.glb",
+    "F": "pieces/cartes/sourcils_F.glb"
+   },
+   "masque": [],
+   "teintes": {
+    "principal": "cheveux"
+   },
+   "cheveux": true,
+   "cartes": true,
+   "nom": "Cils (sourcils peints sur la peau)",
+   "categorie": "sourcils",
+   "provenance": "création de Claude (J52, refaite en J63 : cartes étroites et nombreuses, barbes en couches, cils au bord des paupières) ; atlas cuit depuis les fibres de la coupe V76 de l’atelier, couverture redessinée en J63"
+  }
+ },
+ "teintes_defaut": {
+  "etoffe": "#7a6a48",
+  "laine": "#5a4a38",
+  "cuir": "#6a4a2a",
+  "blason": "#2a3a7a",
+  "metal": "#b8b8b8",
+  "cheveux": "#4a2f1d"
+ },
+ "coiffures": {
+  "cheveux_courts": "coupe_courte",
+  "cheveux_crete": "coupe_courte",
+  "cheveux_rase": "coupe_courte",
+  "cheveux_mi_longs": "coupe_mi_longue",
+  "cheveux_chignon": "coupe_mi_longue",
+  "cheveux_longs": "coupe_longue",
+  "cheveux_natte": "coupe_longue"
+ },
+ "barbes": {
+  "barbe_longue": "barbe_longue",
+  "barbe_courte": "barbe_courte",
+  "barbe": "barbe_pleine"
+ },
+ "matieres": {
+  "lin": {
+   "texture_id": "proc_j51_lin_toile",
+   "fichier": "matieres/lin.webp",
+   "taille_m": 0.045,
+   "relief_m": 0.00035,
+   "rugosite_var": 0.4,
+   "nom": "lin, toile simple, fils flammés"
+  },
+  "laine": {
+   "texture_id": "proc_j51_laine_serge",
+   "fichier": "matieres/laine.webp",
+   "taille_m": 0.05,
+   "relief_m": 0.0004,
+   "rugosite_var": 0.3,
+   "nom": "laine, sergé 2/2, duvet"
+  },
+  "toile": {
+   "texture_id": "proc_j51_toile_forte",
+   "fichier": "matieres/toile.webp",
+   "taille_m": 0.05,
+   "relief_m": 0.0005,
+   "rugosite_var": 0.4,
+   "nom": "toile forte (gambison)"
+  },
+  "cuir": {
+   "texture_id": "proc_j51_cuir_grain",
+   "fichier": "matieres/cuir.webp",
+   "taille_m": 0.03,
+   "relief_m": 0.0002,
+   "rugosite_var": 0.6,
+   "nom": "cuir, grain et plis"
+  },
+  "mailles": {
+   "texture_id": "proc_j51_mailles_4en1",
+   "fichier": "matieres/mailles.webp",
+   "taille_m": 0.056,
+   "relief_m": 0.0012,
+   "rugosite_var": 1.0,
+   "nom": "mailles quatre dans un, anneaux de 7 mm"
+  }
+ },
+ "bruit": {
+  "texture_id": "proc_j51_bruit",
+  "fichier": "matieres/bruit.webp",
+  "taille_m": 0.7
+ },
+ "cheveux": {
+  "description": "J52 : coupes, barbes, sourcils et cils en cartes (atlas de bandes cuit depuis les fibres de l’atelier). Choix : desc.coupe / desc.barbe_coupe / desc.sourcils, ou id de pièce dans desc.pieces ; sinon famille de la coiffure du portrait (coupes_par_coiffure) et variante tirée de l’identifiant du personnage. J63 : toutes les coupes sont tracées par Claude (les guides V66 et V76 de l’atelier ne servent plus) ; sourcils peints par le nuanceur de la peau, la pièce « sourcils » ne porte plus que les cils.",
+  "atlas": "cheveux/atlas.webp",
+  "direction": "cheveux/direction.webp",
+  "sourcils": "sourcils",
+  "ligne": [
+   [
+    0,
+    30
+   ],
+   [
+    30,
+    27
+   ],
+   [
+    55,
+    17
+   ],
+   [
+    68,
+    0
+   ],
+   [
+    76,
+    -20
+   ],
+   [
+    84,
+    -8
+   ],
+   [
+    90,
+    8
+   ],
+   [
+    118,
+    8
+   ],
+   [
+    126,
+    -10
+   ],
+   [
+    140,
+    -32
+   ],
+   [
+    160,
+    -42
+   ],
+   [
+    180,
+    -46
+   ]
+  ],
+  "coupes_par_coiffure": {
+   "cheveux_courts": {
+    "M": [
+     "coiffure_courte",
+     "coiffure_raie_cote",
+     "coiffure_courte",
+     "coiffure_rasee_cotes"
+    ],
+    "F": [
+     "coiffure_courte",
+     "coiffure_carre"
+    ]
+   },
+   "cheveux_mi_longs": {
+    "M": [
+     "coiffure_mi_longue",
+     "coiffure_boucles"
+    ],
+    "F": [
+     "coiffure_mi_longue",
+     "coiffure_carre",
+     "coiffure_boucles"
+    ]
+   },
+   "cheveux_longs": {
+    "M": [
+     "coiffure_longue",
+     "coiffure_queue"
+    ],
+    "F": [
+     "coiffure_longue",
+     "coiffure_queue",
+     "coiffure_boucles"
+    ]
+   },
+   "cheveux_natte": {
+    "M": [
+     "coiffure_tresse",
+     "coiffure_nattes"
+    ],
+    "F": [
+     "coiffure_tresse",
+     "coiffure_nattes"
+    ]
+   },
+   "cheveux_chignon": {
+    "M": [
+     "coiffure_chignon"
+    ],
+    "F": [
+     "coiffure_chignon"
+    ]
+   },
+   "cheveux_crete": {
+    "M": [
+     "coiffure_rasee_cotes"
+    ],
+    "F": [
+     "coiffure_rasee_cotes"
+    ]
+   },
+   "cheveux_rase": {
+    "M": [
+     "coiffure_crane_rase",
+     "coiffure_tonsure"
+    ],
+    "F": [
+     "coiffure_crane_rase"
+    ]
+   }
+  },
+  "barbes_par_defaut": [
+   null,
+   null,
+   null,
+   "barbe_courte",
+   "barbe_pleine"
+  ]
+ },
+ "peau": {
+  "description": "J63 : détail de la peau d’après les peaux MakeHuman (CC0), reporté sur le dépliage de H01/F01 et neutralisé (RGB : rapport à la couleur moyenne × 0,5 ; A : micro-relief, 0,5 = plat). `rect` : cadre de la tête dans le dépliage (u0, v0, u1, v1). `pores` : tuile procédurale originale. Repères relatifs au centre du crâne (mètres).",
+  "pores": {
+   "fichier": "peau/pores.webp",
+   "repetitions": 72,
+   "relief_m": 9e-05
+  },
+  "relief_m": 0.00042,
+  "corps": {
+   "humain_M": {
+    "tete": "peau/tete_H.webp",
+    "tete_age": "peau/tete_H_age.webp",
+    "corps": "peau/corps_H.webp",
+    "rect": [
+     0.0,
+     0.496094,
+     0.523438,
+     0.984375
+    ],
+    "taille_tete": [
+     1072,
+     1000
+    ],
+    "reperes": {
+     "oreille_g": [
+      0.0949,
+      -0.0225,
+      -0.02
+     ],
+     "nez": [
+      0.0,
+      -0.04,
+      0.1329
+     ],
+     "oeil_g": [
+      0.0351,
+      -0.005,
+      0.0851
+     ],
+     "fente": [
+      0.0,
+      -0.0805,
+      0.1159
+     ],
+     "glabelle": [
+      0.0,
+      0.015,
+      0.1088
+     ],
+     "menton": [
+      0.0,
+      -0.1267,
+      0.098
+     ]
+    }
+   },
+   "humain_F": {
+    "tete": "peau/tete_F.webp",
+    "tete_age": "peau/tete_F_age.webp",
+    "corps": "peau/corps_F.webp",
+    "rect": [
+     0.0,
+     0.492188,
+     0.515625,
+     0.996094
+    ],
+    "taille_tete": [
+     1056,
+     1032
+    ],
+    "reperes": {
+     "oreille_g": [
+      0.0893,
+      -0.0231,
+      -0.0157
+     ],
+     "nez": [
+      0.0,
+      -0.0395,
+      0.1289
+     ],
+     "oeil_g": [
+      0.0338,
+      -0.0064,
+      0.082
+     ],
+     "fente": [
+      0.0,
+      -0.0755,
+      0.1133
+     ],
+     "glabelle": [
+      0.0,
+      0.017,
+      0.1037
+     ],
+     "menton": [
+      0.0,
+      -0.1213,
+      0.0926
+     ]
+    }
+   }
+  }
+ }
+}

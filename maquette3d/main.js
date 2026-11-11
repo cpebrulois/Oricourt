@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from './lib/OrbitControls.js';
 import { mergeGeometries } from './lib/BufferGeometryUtils.js';
-import { INTRO, FIN, PERSONNAGES, ANIMAUX, BETES, FIGURANTS, MASURES, CENTRE_BROUILLARD, RAYON_BROUILLARD, DEPART } from './jeu_donnees.js';
+import { INTRO, FIN, PERSONNAGES, ANIMAUX, BETES, FIGURANTS, ROUTINES, MASURES, CENTRE_BROUILLARD, RAYON_BROUILLARD, DEPART } from './jeu_donnees.js';
 import { chargerVivants } from './vivants.js';
 
 const $ = (id) => document.getElementById(id);
@@ -1736,14 +1736,57 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
   JEU.VIV = VIV;
   const groupeBetes = new THREE.Group(); G.vie.add(groupeBetes);
   const figurants = FIGURANTS.map((f) => { const [x, y] = placeLibre(f.pos[0], f.pos[1]); const g = new THREE.Group(); g.position.copy(V(x, y, hauteurSol(x, y))); g.rotation.y = Math.random() * 6; G.vie.add(g); return { ...f, g }; });
+  // routines : postes résolus sur le terrain (place libre, trajet droit sans obstacle), meubles et ouvrages posés
+  const groupeMeubles = new THREE.Group(); G.vie.add(groupeMeubles);
+  const matBois = new THREE.MeshStandardMaterial({ color: 0x6e5236, roughness: 0.9 }), matPierre = new THREE.MeshStandardMaterial({ color: 0xc9b48a, roughness: 0.95 }), matFer = new THREE.MeshStandardMaterial({ color: 0x3c3a38, roughness: 0.5, metalness: 0.7 });
+  function meuble(type, x, y, cap) {
+    const g = new THREE.Group(), b = (w, h, d, m, px = 0, py = 0, pz = 0) => { const k = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); k.position.set(px, py, pz); k.castShadow = k.receiveShadow = true; g.add(k); };
+    if (type === 'banc') { b(1.2, 0.07, 0.34, matBois, 0, 0.44, 0); for (const sx of [-0.5, 0.5]) b(0.07, 0.42, 0.28, matBois, sx, 0.21, 0); }
+    else if (type === 'bloc') { b(0.62, 0.42, 0.42, matPierre, 0, 0.21, 0); b(0.5, 0.32, 0.36, matPierre, 0.85, 0.16, 0.25); }
+    else if (type === 'enclume') { b(0.36, 0.5, 0.36, matBois, 0, 0.25, 0); b(0.42, 0.12, 0.16, matFer, 0, 0.56, 0); b(0.22, 0.06, 0.1, matFer, 0.28, 0.58, 0); }
+    g.position.copy(V(x, y, hauteurSol(x, y))); g.rotation.y = cap; groupeMeubles.add(g);
+  }
+  const libreSur = (a, b) => dansLePasse(() => { const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.ceil(L / 0.4); for (let i = 1; i < n; i++) { if (Math.min(i, n - i) * L / n < 0.5) continue; const x = a[0] + (b[0] - a[0]) * i / n, y = a[1] + (b[1] - a[1]) * i / n; if (bloque(x, y)) return false; } return true; });
+  const capVers = (dx, dy) => Math.atan2(dx, -dy);
+  function routineDe(id, base) {
+    const R = ROUTINES[id]; if (!R) return null;
+    const postes = [];
+    for (const s of R.postes) {
+      const prec = postes.length ? postes[postes.length - 1] : null;
+      let xy = null;
+      if (s.a === 'base') xy = base;
+      else if (s.a && s.a.arche != null) xy = GAL.pt(GAL.sArches[Math.min(s.a.arche, GAL.sArches.length - 1)], s.a.d ?? 1.9);
+      else if (s.a === 'puits') { const d = [base[0] - PUITS[0], base[1] - PUITS[1]], L = Math.hypot(d[0], d[1]) || 1; xy = [PUITS[0] + d[0] / L * 1.3, PUITS[1] + d[1] / L * 1.3]; }
+      else if (Array.isArray(s.a)) for (const o of [s.a, ...(s.ou || []), [-s.a[0], s.a[1]], [s.a[0], -s.a[1]], [-s.a[0], -s.a[1]]]) {   // place voulue, sinon d'autres côtés
+        const c = placeLibre(base[0] + o[0], base[1] + o[1]);
+        if (!dansLePasse(() => bloque(c[0], c[1])) && (!prec || libreSur([prec.x, prec.y], c)) && libreSur(c, postes.length ? [postes[0].x, postes[0].y] : base)) { xy = c; break; }
+      }
+      if (!xy || (prec && !libreSur([prec.x, prec.y], xy))) continue;
+      let cap = null, cible = null;
+      if (s.vers === 'puits') cible = PUITS;
+      else if (s.vers === 'colombier') cible = COLOMBIER.c;
+      else if (Array.isArray(s.vers)) cible = [xy[0] + s.vers[0], xy[1] + s.vers[1]];
+      if (cible) cap = capVers(cible[0] - xy[0], cible[1] - xy[1]);
+      if (s.objet) {
+        if (cap == null) cap = (Math.random() - 0.5) * 6;
+        const f = [Math.sin(cap), -Math.cos(cap)];            // devant lui (repère de la carte)
+        if (s.objet === 'banc') meuble('banc', xy[0] - f[0] * 0.12, xy[1] - f[1] * 0.12, cap);
+        else meuble(s.objet, xy[0] + f[0] * 0.78, xy[1] + f[1] * 0.78, cap);
+      }
+      postes.push({ ...s, x: xy[0], y: xy[1], cap });
+    }
+    if (postes.length > 1 && !libreSur([postes[postes.length - 1].x, postes[postes.length - 1].y], [postes[0].x, postes[0].y])) postes.length = 1;
+    return { trajet: R.trajet || 'marcher', postes };
+  }
   JEU.chargerVivants = () => {
     if (VIV.etat !== 'attente') return; VIV.etat = 'charge';
     annoncer('Les habitants de 1435 arrivent…');
     const habitants = [
-      ...JEU.pnj.map((p) => ({ id: p.id, desc: p.studio, act: p.activite, objet: p.g })),
-      ...figurants.map((f) => ({ id: f.id, desc: f.studio, act: f.activite, objet: f.g })),
+      ...JEU.pnj.map((p) => ({ id: p.id, desc: { ...p.studio, objetMarche: (ROUTINES[p.id] || {}).objetMarche }, act: p.activite, objet: p.g, routine: routineDe(p.id, [p.x, p.y]) })),
+      ...figurants.map((f) => ({ id: f.id, desc: f.studio, act: f.activite, objet: f.g, routine: f.activite.marche ? null : routineDe(f.id, [f.g.position.x, -f.g.position.z]) })),
     ];
-    chargerVivants({ groupeBetes, betes: BETES, habitants, sol: (x, y) => hauteurTerrain(x, y), libre: (x, y) => dansLePasse(() => !bloque(x, y)) && !planchers.some((p) => Math.hypot(x - p.c[0], y - p.c[1]) < p.r + 0.5) })
+    JEU.routines = Object.fromEntries(habitants.map((h) => [h.id, h.routine]));
+    chargerVivants({ groupeBetes, betes: BETES, habitants, sol: (x, y) => hauteurSol(x, y), libre: (x, y) => dansLePasse(() => !bloque(x, y)) && !planchers.some((p) => Math.hypot(x - p.c[0], y - p.c[1]) < p.r + 0.5) })
       .then((m) => {
         VIV.module = m; VIV.etat = 'pret';
         for (const a of JEU.animaux) a.g.visible = false;
@@ -1757,18 +1800,28 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
     JEU.t += dt; matBrume.uniforms.temps.value = JEU.t;
     if (finAnnonce && JEU.t > finAnnonce) { finAnnonce = 0; if (epoque !== 'medieval') $('bandeau').style.display = 'none'; }
     if (!ancien()) { for (const p of JEU.pnj) p.el.style.display = 'none'; return; }
-    if (VIV.module) VIV.module.maj(dt, JEU.dialogue && JEU.dialogue.p ? { id: JEU.dialogue.p.id, tour: JEU.dialogue.tour } : null);
+    if (VIV.module) {
+      VIV.module.maj(dt, JEU.dialogue && JEU.dialogue.p ? { id: JEU.dialogue.p.id, tour: JEU.dialogue.tour } : null, mode === 'pied' ? marcheur : null);
+      for (const p of JEU.pnj) if (p.studio3d && p.studio3d.routine) { p.x = p.studio3d.x; p.y = p.studio3d.y; }
+    }
     else for (const a of JEU.animaux) {
       const th = a.ph + JEU.t * a.v, r = a.r * (0.55 + 0.45 * Math.sin(JEU.t * 0.13 + a.ph * 2)), x = a.c[0] + Math.cos(th) * r, y = a.c[1] + Math.sin(th) * r;
       a.g.position.copy(V(x, y, hauteurTerrain(x, y))); a.g.rotation.y = Math.atan2(-Math.sin(th) * Math.sign(a.v), -Math.cos(th) * Math.sign(a.v)) ;
       if (a.g.userData.tete && (a.type === 'poule' || a.type === 'coq')) a.g.userData.tete.position.y = 0.36 - Math.max(0, Math.sin(JEU.t * 2.2 + a.ph * 5)) * 0.2;
+    }
+    if (VIV.module) {   // regard : les habitants proches suivent le voyageur des yeux et de la tête (vie du Studio)
+      for (const H of VIV.module.habitants) {
+        H.objet.getWorldPosition(v3); const d = Math.hypot(marcheur.x - v3.x, marcheur.y + v3.z);
+        const parle = JEU.dialogue && JEU.dialogue.p && JEU.dialogue.p.id === H.id;
+        VIV.module.regarder(H.id, mode === 'pied' && (d < 7 || parle) ? camera.position : null);
+      }
     }
     if (epoque !== 'jeu') { for (const p of JEU.pnj) p.el.style.display = 'none'; return; }
     let proche = null, dMin = 3.4;
     for (const p of JEU.pnj) {
       const d = Math.hypot(marcheur.x - p.x, marcheur.y - p.y);
       if (!p.studio3d) { p.g.userData.tete.rotation.x = Math.sin(JEU.t * 0.9 + p.ph) * 0.05; p.g.position.y = hauteurSol(p.x, p.y) + Math.abs(Math.sin(JEU.t * 1.1 + p.ph)) * 0.012; }
-      if (mode === 'pied' && d < 9) { const cibleRot = Math.atan2(marcheur.x - p.x, -(marcheur.y - p.y) * -1 * -1); let dr = cibleRot - p.g.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); p.g.rotation.y += dr * Math.min(1, dt * 4); }
+      if (mode === 'pied' && (p.studio3d ? (d < 2.4 || (JEU.dialogue && JEU.dialogue.p === p)) : d < 9)) { const cibleRot = Math.atan2(marcheur.x - p.x, -(marcheur.y - p.y) * -1 * -1); let dr = cibleRot - p.g.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); p.g.rotation.y += dr * Math.min(1, dt * 4); }
       if (mode === 'pied' && d < dMin) { dMin = d; proche = p; }
       v3.copy(V(p.x, p.y, hauteurSol(p.x, p.y) + 2.15)).project(camera);
       const vis = v3.z < 1 && Math.abs(v3.x) < 1.05 && Math.abs(v3.y) < 1.05 && camera.position.distanceTo(p.g.position) < (mode === 'pied' ? 38 : 400);

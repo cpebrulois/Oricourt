@@ -9,6 +9,8 @@ import * as THREE from 'three';
 import { GLTFLoader } from './lib/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from './lib/jsm/libs/meshopt_decoder.module.js';
 import { clone as clonerArticule } from './lib/jsm/utils/SkeletonUtils.js';
+import { HabillageStudio } from './habillage_studio.js';
+import { Vie } from './vie.js';
 
 const BASE = 'studio/';
 const chargeur = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
@@ -69,93 +71,16 @@ class Mouvements {
 }
 
 // ------------------------------------------------------------------------------------------------ habillage
-const lin = (hex) => new THREE.Color(hex);
-function teindre(mat, def, teintes, defauts) {
-  const choix = (canal, d) => lin(teintes[(def.teintes || {})[canal]] || defauts[(def.teintes || {})[canal]] || d);
-  const u = { uT1: { value: choix('principal', '#7a6a48') }, uT2: { value: choix('secondaire', '#5a4a38') }, uT3: { value: choix('cuir', '#6a4a2a') }, uT4: { value: choix('ornement', '#b8a070') },
-    uMasqueCst: { value: new THREE.Vector4(mat.emissive.r, mat.emissive.g, mat.emissive.b, 1) } };
-  if (mat.emissiveMap) mat.emissiveMap.colorSpace = THREE.NoColorSpace;
-  mat.emissive.setRGB(0, 0, 0); mat.side = THREE.DoubleSide;
-  if (def.metal) mat.metalness = Math.min(0.5, def.metal);
-  if (def.rugosite) mat.roughness = def.rugosite;
-  const acier = def.acier ? lin(teintes.metal || defauts.metal || '#b8b8b8').multiplyScalar(def.acier) : null;
-  mat.onBeforeCompile = (sh) => {
-    Object.assign(sh.uniforms, u); if (acier) sh.uniforms.uAcier = { value: acier };
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-uniform vec3 uT1; uniform vec3 uT2; uniform vec3 uT3; uniform vec3 uT4; uniform vec4 uMasqueCst;${acier ? ' uniform vec3 uAcier;' : ''}`)
-      .replace('#include <map_fragment>', `#include <map_fragment>
-  {
-#ifdef USE_EMISSIVEMAP
-    vec4 mq = texture2D(emissiveMap, vEmissiveMapUv);
-#else
-    vec4 mq = uMasqueCst;
-#endif
-    float orn = clamp((1.0 - mq.a) / 0.85, 0.0, 1.0);
-    float s = clamp(mq.r + mq.g + mq.b + orn, 0.0, 1.0);
-    ${acier ? 'diffuseColor.rgb = uAcier * (1.0 - s) + diffuseColor.rgb * (uT1 * mq.r + uT2 * mq.g + uT3 * mq.b + uT4 * orn);' : 'diffuseColor.rgb *= vec3(1.0 - s) + uT1 * mq.r + uT2 * mq.g + uT3 * mq.b + uT4 * orn;'}
-  }`)
-      .replace('#include <emissivemap_fragment>', '');
-  };
-  mat.customProgramCacheKey = () => 'teinture_oricourt' + (acier ? '_acier' : '');
-}
-// peau : la carte de base est un masque (R = teint, G = lèvres, B = rougeur, A = 1 − 0,8 × sourcils), teinté comme dans le Studio
-// (branche simple de personnages_habillage.js, sans les cartes de détail J63)
-const TEINTS = ['#e3bd9c', '#d9b08c', '#cfa07c', '#e8c6a8', '#c08f6b', '#d6a985'];
-function peau(mat, masque, teintHex, cheveuxHex) {
-  if (mat.map) { mat.map.colorSpace = THREE.NoColorSpace; mat.map.needsUpdate = true; }
-  const teint = lin(teintHex), u = { uMasque: { value: masque }, uTeint: { value: teint },
-    uLevres: { value: teint.clone().multiply(new THREE.Color(0.74, 0.47, 0.45)) }, uSourcils: { value: lin(cheveuxHex).multiplyScalar(0.75) } };
-  mat.metalness = 0; mat.roughness = 0.55;
-  mat.onBeforeCompile = (sh) => {
-    Object.assign(sh.uniforms, u);
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float _zones; uniform int uMasque; varying float vCache;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvCache = (int(_zones + 0.5) & uMasque) != 0 ? 1.0 : 0.0;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vCache; uniform vec3 uTeint; uniform vec3 uLevres; uniform vec3 uSourcils;')
-      .replace('#include <map_fragment>', `if (vCache > 0.5) discard;
-#ifdef USE_MAP
-  vec4 dPeau = texture2D(map, vMapUv);
-  vec3 cPeau = uTeint * mix(1.0, dPeau.r, 0.85);
-  cPeau = mix(cPeau, cPeau * vec3(1.05, 0.80, 0.76), dPeau.b * 0.35);
-  cPeau = mix(cPeau, uLevres, dPeau.g * 0.85);
-  cPeau = mix(cPeau, uSourcils, clamp((1.0 - dPeau.a) * 1.5, 0.0, 1.0) * 0.55);
-  diffuseColor.rgb = cPeau;
-#endif`);
-  };
-  mat.customProgramCacheKey = () => 'peau_oricourt';
-}
-
-// yeux : sclère, iris et pupille dessinés d'après la direction depuis le centre du globe (regard vers +Z, comme au Studio)
-const IRIS = ['#5a3a22', '#8a6a2f', '#3f7a4a', '#3e6fa8', '#7b8794', '#5a4630'];
-function oeil(m, desc) {
-  const b = new THREE.Box3().setFromBufferAttribute(m.geometry.attributes.position), c = b.getCenter(new THREE.Vector3());
-  const graine = [...JSON.stringify(desc)].reduce((h, x) => (h * 17 + x.charCodeAt(0)) >>> 0, 3);
-  const u = { uCentre: { value: c }, uIris: { value: lin((desc.teintes || {}).yeux || IRIS[graine % IRIS.length]) } };
-  const o = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.25, metalness: 0, name: 'oeil' });
-  o.onBeforeCompile = (sh) => {
-    Object.assign(sh.uniforms, u);
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vOeil; uniform vec3 uCentre;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvOeil = normalize(position - uCentre);');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vOeil; uniform vec3 uIris;')
-      .replace('#include <map_fragment>', `{ float a = acos(clamp(vOeil.z, -1.0, 1.0));
-  vec3 c = vec3(0.86, 0.83, 0.80) * mix(1.0, 0.82, smoothstep(0.5, 1.3, a));
-  c = mix(c, uIris * (0.75 + 0.25 * sin(atan(vOeil.y, vOeil.x) * 23.0)), 1.0 - smoothstep(0.40, 0.44, a));
-  c = mix(c, vec3(0.03), 1.0 - smoothstep(0.15, 0.18, a));
-  diffuseColor.rgb = c; }`);
-  };
-  o.customProgramCacheKey = () => 'oeil_oricourt';
-  return o;
-}
-
 // coiffes et accessoires portés par un os (tête, main) : formes simples, aux couleurs de la tenue
 function accessoire(type, couleur) {
   const g = new THREE.Group(), mat = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.9, ...o });
   const m = (geo, mt, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => { const k = new THREE.Mesh(geo, mt); k.position.set(x, y, z); k.rotation.set(rx, ry, rz); k.castShadow = true; g.add(k); return k; };
   const calotte = (r, haut = 0.5) => new THREE.SphereGeometry(r, 18, 10, 0, Math.PI * 2, 0, Math.PI * haut);
   // repères (os Head, repos identité ; le groupe est remonté de 6 cm à la pose) : sommet du crâne ≈ 0.22 au-dessus du pivot de la tête
-  const bonnetDe = (r, mt, haut = 0.36, y = 0.06) => { const k = m(calotte(r, haut), mt, 0, y, 0.004, -0.32); k.scale.set(0.97, 1.0, 1.1); return k; };
+  const bonnetDe = (r, mt, haut = 0.36, y = 0.06, incl = -0.32) => { const k = m(calotte(r, haut), mt, 0, y, 0.004, incl); k.scale.set(0.97, 1.0, 1.1); return k; };
   if (type === 'coiffe') {
     const lin = mat(couleur || 0xeee8d8, { side: THREE.DoubleSide });
-    bonnetDe(0.146, lin, 0.42, 0.03);
+    bonnetDe(0.146, lin, 0.46, 0.03, -0.14);
     m(new THREE.CylinderGeometry(0.122, 0.128, 0.15, 16, 1, true, Math.PI * 0.3, Math.PI * 1.4), lin, 0, 0.0, -0.012, -0.1);
   } else if (type === 'chaperon') {
     bonnetDe(0.134, mat(couleur), 0.4, 0.055);
@@ -181,59 +106,54 @@ function accessoire(type, couleur) {
     m(new THREE.BoxGeometry(0.06, 0.06, 0.15), mat(0x6a6e72, { metalness: 0.6, roughness: 0.5 }), 0, 0.25, 0);
   } else if (type === 'panier') {
     m(new THREE.CylinderGeometry(0.17, 0.12, 0.16, 12, 1, true), mat(0xa88a52, { side: THREE.DoubleSide }), 0, -0.12, 0.08);
+  } else if (type === 'seau') {
+    const bois = mat(0x7a5a38, { side: THREE.DoubleSide });
+    m(new THREE.CylinderGeometry(0.13, 0.11, 0.24, 14, 1, true), bois, 0, -0.28, 0.02);
+    m(new THREE.CircleGeometry(0.11, 14), bois, 0, -0.4, 0.02, Math.PI / 2);
+    m(new THREE.TorusGeometry(0.1, 0.006, 4, 16, Math.PI), mat(0x55504a, { metalness: 0.5 }), 0, -0.16, 0.02);
   } else if (type === 'livre') {
     m(new THREE.BoxGeometry(0.16, 0.04, 0.22), mat(0x5a2f22), 0, -0.02, 0.06, 0.3);
   }
   return g;
 }
 
+// Pièces d'Oricourt → pièces de l'habillage du Studio (cheveux et barbes en cartes, J52-J63)
+const COUPES = { coupe_courte: 'coiffure_courte', coupe_mi_longue: 'coiffure_mi_longue', coupe_longue: 'coiffure_longue' };
 class Habilleur {
-  constructor(index, mvt) { this.index = index; this.mvt = mvt; }
-  static async charger(mvt) { return new Habilleur(await json('habillage/habillage.json'), mvt); }
-  corpsDe(sexe) { return this.index.corps.find((c) => c.sexe === (sexe === 'F' ? 'F' : 'M')); }
-  /** Un habitant : corps cloné, pièces liées à son squelette, teintes, coiffe ; retourne {racine, os, corps, mixer}. */
+  constructor(hab, mvt) { this.hab = hab; this.mvt = mvt; }
+  static async charger(mvt) { return new Habilleur(await HabillageStudio.charger(BASE + 'habillage/'), mvt); }
+  /** Un habitant : corps, peau, yeux, cheveux, tenue, robe longue et tablier pour les femmes, coiffe et objet porté. */
   async habiller(desc) {
-    const corps = this.corpsDe(desc.sexe), S = corps.sexe === 'F' ? 'F' : 'H';
-    // sous une coiffe, un chaperon, un bonnet ou un chapel, les cheveux sont rentrés : la coupe dépasserait du couvre-chef
-    const couvert = (desc.coiffes || []).some((c) => c === 'coiffe');
-    const ids = (desc.pieces || []).filter((p) => !(couvert && p.startsWith('coupe_')));
-    const [gCorps, ...gPieces] = await Promise.all([glb('habillage/' + corps.fichier), ...ids.map((p) => glb('habillage/' + this.index.pieces[p].fichiers[corps.sexe]))]);
-    const racine = clonerArticule(gCorps.scene);
-    const os = new Map();
-    racine.traverse((o) => { if (o.isBone) os.set(o.name, o); });
-    const zones = this.index.zones;
-    const masque = ids.reduce((s, p) => (this.index.pieces[p].masque || []).reduce((t, z) => (zones.indexOf(z) >= 0 ? t | (1 << zones.indexOf(z)) : t), s), 0);
-    let support = null;
-    const graine = [...JSON.stringify(desc)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
-    const teintPeau = (desc.teintes || {}).peau || TEINTS[graine % TEINTS.length];
-    racine.traverse((o) => {
-      if (!o.isSkinnedMesh) return;
-      o.castShadow = true; o.receiveShadow = true;
-      if (/^oeil/.test(o.material.name || '')) { o.material = oeil(o, desc); return; }
-      if (o.geometry.attributes._zones && /^peau/.test(o.material.name || '')) { o.material = o.material.clone(); peau(o.material, masque, teintPeau, (desc.teintes || {}).cheveux || '#4a2f1d'); support = o.parent; }
-    });
-    const teintes = { ...(desc.teintes || {}) };
-    gPieces.forEach((g, i) => {
-      const def = this.index.pieces[ids[i]];
-      g.scene.traverse((o) => {
-        if (!o.isSkinnedMesh) return;
-        const m = o.clone();
-        m.material = o.material.clone();
-        teindre(m.material, def, teintes, this.index.teintes_defaut);
-        const sq = new THREE.Skeleton(o.skeleton.bones.map((b) => os.get(b.name) || b), o.skeleton.boneInverses);
-        m.bind(sq, o.bindMatrix);
-        m.castShadow = true; m.receiveShadow = true;
-        (support || racine).add(m);
-      });
-    });
-    const tete = os.get('Head'), mainD = os.get('RightHand');
-    for (const a of desc.coiffes || []) { const acc = accessoire(a, desc.couleurCoiffe); acc.position.y = 0.06; if (S === 'F') { acc.scale.setScalar(0.94); acc.position.y = 0.055; } tete.add(acc); }
+    const S = desc.sexe === 'F' ? 'F' : 'M', coiffes = desc.coiffes || [];
+    const sousCoiffe = coiffes.includes('coiffe');                       // cheveux rentrés sous le couvre-chef de lin
+    let coupe = desc.coupe || (desc.pieces || []).map((p) => COUPES[p]).find(Boolean) || null;
+    if (coiffes.includes('tonsure')) coupe = 'coiffure_tonsure';
+    if (sousCoiffe) coupe = null;
+    const barbe = desc.barbe || ((desc.pieces || []).includes('barbe') ? 'barbe_courte' : null);
+    const pieces = (desc.pieces || []).filter((p) => !COUPES[p] && p !== 'barbe');
+    const graine = hache(JSON.stringify(desc));
+    const teintes = { peau: TEINTS[graine % TEINTS.length], ...(desc.teintes || {}) };
+    const a = await this.hab.assembler({ id: desc.id, sexe: S, pieces, coupe, barbe, teintes, robe: !!desc.robe, age: desc.age || 0, yeux: desc.yeux || IRIS[(graine >>> 4) % IRIS.length] });
+    if (desc.robe) this.hab.robeLongue(a, { ...desc.robe, teintes });
+    for (const m of a.maillages) { const n = (m.material && m.material.name) || ''; m.castShadow = n !== 'oeil' && n !== 'cheveux_cartes' && m.userData.piece !== 'sourcils'; m.receiveShadow = true; }
+    const tete = a.os.get('Head'), mainD = a.os.get('RightHand');
+    for (const c of coiffes) {
+      if (c === 'tonsure') continue;
+      // pivots du Studio : l'os de la tête est plus haut que sur le corps brut ; les couvre-chefs se posent sur les mèches
+      const acc = accessoire(c, desc.couleurCoiffe), dy = { coiffe: 0.012, chaperon: -0.012, bonnet: -0.01, chapel: -0.035, chapeau: -0.035 }[c] ?? 0.0;
+      acc.position.y = dy; if (coupe && c !== 'chapeau') acc.scale.setScalar(1.07);
+      if (S === 'F') { acc.scale.multiplyScalar(0.94); acc.position.y = dy - 0.005; }
+      tete.add(acc);
+    }
     if (desc.objet && mainD) { const o = accessoire(desc.objet); o.rotation.set(0, 0, desc.objet === 'lance' ? 0.0 : 0.3); mainD.add(o); }
-    racine.scale.setScalar(desc.echelle || 1);
-    racine.userData.corps = corps;
-    return { racine, os, corps, mixer: new THREE.AnimationMixer(racine) };
+    let objetMarche = null;
+    if (desc.objetMarche && mainD) { objetMarche = accessoire(desc.objetMarche); objetMarche.visible = false; mainD.add(objetMarche); }
+    a.racine.scale.setScalar(desc.echelle || 1);
+    return { objetMarche, racine: a.racine, os: a.os, corps: a.corps, maillages: a.maillages, mixer: new THREE.AnimationMixer(a.racine), hauteur: (a.corps.taille_m || 1.75) * (desc.echelle || 1) };
   }
 }
+const TEINTS = ['#e3bd9c', '#d9b08c', '#cfa07c', '#e8c6a8', '#c99d7b', '#d6a985'];
+const IRIS = ['#5a3a22', '#8a6a2f', '#3f7a4a', '#3e6fa8', '#7b8794', '#5a4630'];
 
 // ------------------------------------------------------------------------------------------------ un habitant qui vit
 class Habitant {
@@ -272,8 +192,11 @@ class Habitant {
     this.geste = a; a.reset().fadeIn(0.3).play();
     if (this.fond) this.fond.fadeOut(0.3);
   }
-  maj(dt, parle) {
-    if (!this.act.marche) {
+  /** Une image. `parle` : dialogue en cours avec cet habitant ; `arret` : le voyageur est tout près (il s'interrompt). */
+  maj(dt, parle, arret) {
+    const R = this.routine;
+    if (R) this.suivreRoutine(dt, parle, arret);
+    else if (!this.act.marche) {
       const fond = parle ? (parle.tour === 'pnj' ? 'parler' : 'ecouter') : this.act.fond;
       this.poser(fond);
       this.prochain -= dt;
@@ -281,9 +204,32 @@ class Habitant {
     }
     this.mixer.update(dt);
   }
+  /** Routine de métier : des postes (où il travaille, face à son ouvrage) reliés par des trajets à pied ; il s'interrompt
+   *  quand le voyageur s'approche ou lui parle, et reprend où il en était. */
+  suivreRoutine(dt, parle, arret) {
+    const R = this.routine, P = R.postes[R.i];
+    if (parle || arret) {
+      if (R.etat === 'marche') this.poser('attendre');
+      else if (parle) this.poser(/assis/.test(P.fond) ? (parle.tour === 'pnj' ? 'assis_parler' : P.fond) : (parle.tour === 'pnj' ? 'parler' : 'ecouter'));
+      else this.poser(P.fond_arret || (/assis/.test(P.fond) ? P.fond : 'attendre'));
+      if (this.objetMarche) this.objetMarche.visible = false;
+      return;
+    }
+    if (R.etat === 'poste') {
+      this.poser(P.fond);
+      this.tourner(P.cap, dt);
+      this.prochain -= dt; R.t -= dt;
+      if (this.prochain <= 0 && P.gestes && P.gestes.length) { this.prochain = P.periode[0] + this.R() * (P.periode[1] - P.periode[0]); this.gesticuler(P.gestes[Math.floor(this.R() * P.gestes.length)]); }
+      if (R.t <= 0 && !this.geste && R.postes.length > 1) { R.i = (R.i + 1) % R.postes.length; R.etat = 'marche'; this.poser(R.postes[R.i].trajet || R.trajet, 0.35); }
+    } else {
+      const dx = P.x - this.x, dy = P.y - this.y, d = Math.hypot(dx, dy), v = ((this.fond && this.fond.userData.v) || 1) * (this.racine.scale.x || 1);
+      if (this.objetMarche) this.objetMarche.visible = !!P.porte;
+      if (d < 0.12) { R.etat = 'poste'; R.t = P.duree[0] + this.R() * (P.duree[1] - P.duree[0]); this.prochain = 0.8 + this.R() * 2; if (this.objetMarche) this.objetMarche.visible = false; }
+      else { const p = Math.min(d, v * dt); this.x += dx / d * p; this.y += dy / d * p; this.tourner(Math.atan2(dx, -dy), dt * 1.6); }
+    }
+  }
+  tourner(cap, dt) { if (cap == null) return; let dr = cap - this.objet.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); this.objet.rotation.y += dr * Math.min(1, dt * 3.5); }
 }
-
-// ------------------------------------------------------------------------------------------------ bêtes
 function robe(mat, r) {
   if (!r || (!r.t2 && r.t.every((v) => Math.abs(v - 1) < 1e-3))) return;
   const U = { uRobe: { value: new THREE.Vector3(...r.t) }, uRobe2: { value: new THREE.Vector3(...(r.t2 || r.t)) }, uPie: { value: new THREE.Vector4(r.pie || 0, r.ech || 1, Math.random() * 50, 0) } };
@@ -341,16 +287,15 @@ class Bete {
 }
 
 // ------------------------------------------------------------------------------------------------ chargement
-/**
- * ctx : { groupeBetes, sol(x,y), libre(x,y), betes: [[espece, x, y, rayon, robe]], habitants: [{id, desc, act, objet (Group où poser le modèle)}] }
- * Retourne { betes, habitants, maj(dt, parlant) }.
- */
 export async function chargerVivants(ctx) {
   const mvt = await Mouvements.charger();
   const hab = await Habilleur.charger(mvt);
   const intentions = new Set();
-  for (const h of ctx.habitants) { intentions.add(h.act.fond); for (const g of h.act.gestes || []) intentions.add(g); if (h.act.marche) intentions.add(h.act.marche); }
-  ['parler', 'ecouter', 'oui', 'saluer'].forEach((i) => intentions.add(i));
+  for (const h of ctx.habitants) {
+    intentions.add(h.act.fond); for (const g of h.act.gestes || []) intentions.add(g); if (h.act.marche) intentions.add(h.act.marche);
+    if (h.routine) { intentions.add(h.routine.trajet); for (const p of h.routine.postes) { intentions.add(p.fond); if (p.trajet) intentions.add(p.trajet); for (const g of p.gestes || []) intentions.add(g); } }
+  }
+  ['parler', 'ecouter', 'oui', 'non', 'saluer', 'attendre', 'assis_parler'].forEach((i) => intentions.add(i));
   const preMvt = mvt.precharger(intentions);
   const animaux = await json('animaux/animaux.json');
   const betes = [];
@@ -365,13 +310,20 @@ export async function chargerVivants(ctx) {
     ctx.groupeBetes.add(racine);
     betes.push(new Bete(esp, info, racine, ctx, [x, y], r, hache(esp + i)));
   });
-  const habitants = [];
+  const habitants = [], vie = new Vie();
   await Promise.all(ctx.habitants.map(async (h) => {
     try {
       const m = await hab.habiller(h.desc);
       h.objet.add(m.racine);
       const H = new Habitant(m, mvt, h.act, hache(h.id));
-      H.id = h.id; H.objet = h.objet; H.marche = h.act.marche ? { chemin: h.act.chemin, i: 0, x: h.act.chemin[0][0], y: h.act.chemin[0][1] } : null;
+      H.id = h.id; H.objet = h.objet;
+      if (h.routine && h.routine.postes.length) {
+        H.routine = { ...h.routine, i: 0, etat: 'poste', t: 2 + Math.random() * 6 };
+        H.x = h.routine.postes[0].x; H.y = h.routine.postes[0].y; H.objet.rotation.y = h.routine.postes[0].cap ?? H.objet.rotation.y;
+      }
+      // porteur de la vie procédurale du Studio (respiration, appuis, regard, clignements)
+      H.porteur = { objet: H.racine, os: H.os, maillages: H.maillages, desc: { id: h.id }, hauteur: H.hauteur,
+        get etat() { return H.intentionFond || ''; }, get geste() { return !!H.geste; }, get enMarche() { return !!H.marche; } }; H.marche = h.act.marche ? { chemin: h.act.chemin, i: 0, x: h.act.chemin[0][0], y: h.act.chemin[0][1] } : null;
       habitants.push(H);
     } catch (e) { console.warn('habitant non chargé', h.id, e); }
   }));
@@ -379,10 +331,20 @@ export async function chargerVivants(ctx) {
   for (const H of habitants) if (H.marche) { H.poser(H.act.marche, 0.1); }
   return {
     betes, habitants,
-    maj(dt, parlant) {
+    vie,
+    /** Regard d'un habitant : `point` (THREE.Vector3, monde) qu'il suit des yeux et de la tête, ou null. */
+    regarder(id, point) { const H = habitants.find((x) => x.id === id); if (H) vie.fixer(H.objet, point); },
+    maj(dt, parlant, voyageur) {
       for (const b of betes) b.maj(dt);
+      vie.avant();
       for (const H of habitants) {
-        if (H.marche) {
+        const parle = parlant && parlant.id === H.id ? parlant : null;
+        const px = H.routine ? H.x : H.marche ? H.marche.x : null, py = H.routine ? H.y : H.marche ? H.marche.y : null;
+        const arret = !!voyageur && px != null && Math.hypot(voyageur.x - px, voyageur.y - py) < (H.arret || 3.6);
+        if (H.routine) { H.maj(dt, parle, arret); H.objet.position.set(H.x, ctx.sol(H.x, H.y), -H.y); continue; }
+        if (H.marche && arret) { H.poser('attendre'); H.marcheArretee = true; }
+        else if (H.marche && H.marcheArretee) { H.marcheArretee = false; H.poser(H.act.marche, 0.35); }
+        if (H.marche && !arret) {
           const M = H.marche, c = M.chemin[(M.i + 1) % M.chemin.length], dx = c[0] - M.x, dy = c[1] - M.y, d = Math.hypot(dx, dy);
           const v = (H.fond && H.fond.userData.v) || 1;
           if (d < 0.2) M.i = (M.i + 1) % M.chemin.length;
@@ -390,8 +352,9 @@ export async function chargerVivants(ctx) {
           H.objet.position.set(M.x, ctx.sol(M.x, M.y), -M.y);
           const vis = Math.atan2(dx, -dy); let dr = vis - H.objet.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); H.objet.rotation.y += dr * Math.min(1, dt * 5);
         }
-        H.maj(dt, parlant && parlant.id === H.id ? parlant : null);
+        H.maj(dt, parle, arret);
       }
+      vie.apres(habitants.map((H) => H.porteur), dt);
     },
     trouver(id) { return habitants.find((h) => h.id === id) || null; },
   };

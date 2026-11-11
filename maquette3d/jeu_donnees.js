@@ -32,7 +32,7 @@ export const POINT_RETOUR = 'puits';
 export const PERSONNAGES = [
   {
     id: 'guillemette', nom: 'Guillemette', role: 'servante du logis', pos: [-2, -4],
-    studio: { sexe: 'F', pieces: ['tunique', 'chausses', 'bottes', 'ceinture', 'coupe_mi_longue'], teintes: { etoffe: '#7d8a5c', blason: '#d9d2bf', laine: '#5a4a3a', cuir: '#5a3e26', cheveux: '#6b4a2c' }, coiffes: ['coiffe'], couleurCoiffe: 0xeee8d8 },
+    studio: { sexe: 'F', pieces: ['tunique', 'bottes', 'ceinture'], robe: { couleur: '#6f7d4e', tablier: '#e4d9bd' }, teintes: { etoffe: '#7a8956', blason: '#d9d2bf', laine: '#5a4a3a', cuir: '#5a3e26', cheveux: '#6b4a2c', peau: '#e8c3a4' }, yeux: '#6a5034', coiffes: ['coiffe'], couleurCoiffe: 0xeee6d2 },
     activite: { fond: 'attendre', gestes: ['saluer', 'designer', 'oui', 's_etirer'], periode: [7, 15] },
     tenue: { cotte: 0x7a8c5a, chausses: 0x5a4a3a, coiffe: 'coiffe', couleurCoiffe: 0xe8e2d2, tablier: 0xd9d2bf },
     accueil: "Sainte Vierge ! D'où sors-tu, avec ces drôles de braies ? Tu es tombé du brouillard, toi aussi… Ne crains rien. Ici, c'est Oricourt, en comté de Bourgogne. Je vais t'expliquer.",
@@ -47,7 +47,7 @@ export const PERSONNAGES = [
   },
   {
     id: 'aubert', nom: 'Maître Aubert', role: 'intendant du seigneur', pos: [8.5, -3],
-    studio: { sexe: 'M', pieces: ['tunique', 'surcot', 'chausses', 'bottes', 'ceinture', 'bourse', 'coupe_courte', 'barbe'], teintes: { etoffe: '#3a3f5a', blason: '#5a2430', laine: '#2c2a33', cuir: '#3a2a1c', cheveux: '#8a8478' }, coiffes: ['chaperon'], couleurCoiffe: 0x2f3f5a },
+    studio: { sexe: 'M', pieces: ['tunique', 'surcot', 'chausses', 'bottes', 'ceinture', 'bourse'], coupe: 'coiffure_courte', barbe: 'barbe_courte', age: 0.5, teintes: { etoffe: '#2c324d', blason: '#2c324d', laine: '#232838', cuir: '#3a2a1c', cheveux: '#7d776c', peau: '#d6ab8b' }, yeux: '#5a4630', coiffes: ['chaperon'], couleurCoiffe: 0x263052 },
     activite: { fond: 'attendre', gestes: ['designer', 'hausser_epaules', 'non', 'oui'], periode: [8, 18] },
     tenue: { cotte: 0x5a2f3a, chausses: 0x2c2a33, coiffe: 'chaperon', couleurCoiffe: 0x2f3f5a, longue: true },
     accueil: "Halte. Je suis Aubert, intendant de ce château. Je tiens les comptes, je fais rentrer les redevances et je réponds de tout devant mon maître. Que veux-tu savoir ?",
@@ -62,7 +62,7 @@ export const PERSONNAGES = [
   },
   {
     id: 'mahaut', nom: 'Mahaut', role: 'cuisinière', pos: 'galerie',
-    studio: { sexe: 'F', pieces: ['tunique', 'chausses', 'bottes', 'ceinture', 'coupe_mi_longue'], teintes: { etoffe: '#8a5a3a', blason: '#e6dfcc', laine: '#4a3a2a', cuir: '#4a3220', cheveux: '#3a2a1c' }, coiffes: ['coiffe'], couleurCoiffe: 0xf0ead8 },
+    studio: { sexe: 'F', pieces: ['tunique', 'bottes', 'ceinture'], robe: { couleur: '#8a4f2e', tablier: '#ddd2b6' }, age: 0.25, echelle: 1.02, teintes: { etoffe: '#94582f', blason: '#e6dfcc', laine: '#4a3a2a', cuir: '#4a3220', cheveux: '#3a2a1c', peau: '#e3a98c' }, yeux: '#5a3a22', coiffes: ['coiffe'], couleurCoiffe: 0xefe8d6 },
     activite: { fond: 'attendre', gestes: ['se_rechauffer', 'ranger', 'oui', 'designer'], periode: [6, 13] },
     tenue: { cotte: 0x8a5a3a, chausses: 0x4a3a2a, coiffe: 'coiffe', couleurCoiffe: 0xf0ead8, tablier: 0xe6dfcc },
     accueil: "Ôte-toi de mon seau ! Ah… tu n'es pas d'ici. Je suis Mahaut, je règne sur la grande cuisine. Et ce puits, c'est mon trésor.",
@@ -77,7 +77,7 @@ export const PERSONNAGES = [
   },
   {
     id: 'etienne', nom: 'Frère Étienne', role: 'clerc', pos: [8.5, -13.5],
-    studio: { sexe: 'M', pieces: ['tunique', 'surcot', 'chausses', 'bottes', 'ceinture', 'coupe_courte'], teintes: { etoffe: '#4a3f36', blason: '#3a302a', laine: '#3a302a', cuir: '#3a2a1c', cheveux: '#5a4030' }, coiffes: ['tonsure'], objet: 'livre' },
+    studio: { sexe: 'M', pieces: ['tunique', 'chausses', 'bottes', 'ceinture'], robe: { couleur: '#4a3628' }, coupe: 'coiffure_tonsure', teintes: { etoffe: '#4a3628', blason: '#3a2c22', laine: '#3a2c22', cuir: '#3a2a1c', cheveux: '#4e3626', peau: '#dcb393' }, yeux: '#5a3a22', coiffes: ['tonsure'], objet: 'livre' },
     activite: { fond: 'ecouter', gestes: ['prier', 'perplexe', 'oui'], periode: [10, 20] },
     tenue: { cotte: 0x4a3f36, chausses: 0x3a302a, coiffe: 'tonsure', couleurCoiffe: 0x6b4a2f, longue: true },
     accueil: "La paix soit avec toi, enfant. Je suis Étienne. J'écris les lettres de l'intendant et je tiens le livre des comptes, car bien peu de gens ici savent lire.",
@@ -92,7 +92,7 @@ export const PERSONNAGES = [
   },
   {
     id: 'perrin', nom: 'Perrin', role: 'guetteur de la tour', pos: [2, -24],
-    studio: { sexe: 'M', pieces: ['gambison', 'chausses', 'bottes', 'ceinture_large', 'coupe_courte'], teintes: { etoffe: '#6a6450', cuir: '#4a3220', laine: '#3b3b3b', cheveux: '#4a3220' }, coiffes: ['chapel'], objet: 'lance' },
+    studio: { sexe: 'M', pieces: ['gambison', 'chausses', 'bottes', 'ceinture_large'], coupe: 'coiffure_courte', teintes: { etoffe: '#7b7458', cuir: '#4a3220', laine: '#3b3b3b', cheveux: '#4a3220', peau: '#ddb28f' }, yeux: '#6a5034', coiffes: ['chapel'], objet: 'lance' },
     activite: { fond: 'guetter', gestes: ['guetter', 's_etirer', 'souffler'], periode: [8, 16] },
     tenue: { cotte: 0x55606a, chausses: 0x3b3b3b, coiffe: 'casque', couleurCoiffe: 0x8b9096, arme: 'lance' },
     accueil: "Qui va là ? … Un enfant. Je suis Perrin, guetteur. Je passe mes journées là-haut, à vingt-cinq mètres, à regarder les chemins.",
@@ -107,7 +107,7 @@ export const PERSONNAGES = [
   },
   {
     id: 'girard', nom: 'Girard', role: 'maître maçon', pos: [-19, -5],
-    studio: { sexe: 'M', pieces: ['tunique', 'chausses', 'bottes', 'ceinture', 'bourse', 'coupe_courte', 'barbe'], teintes: { etoffe: '#9a8a6a', blason: '#6a5a48', laine: '#5a5040', cuir: '#5a3e26', cheveux: '#6b5a48' }, coiffes: ['bonnet'], couleurCoiffe: 0x7a4a3a, objet: 'marteau' },
+    studio: { sexe: 'M', pieces: ['tunique', 'chausses', 'bottes', 'ceinture', 'bourse'], coupe: 'coiffure_courte', barbe: 'barbe_pleine', age: 0.7, teintes: { etoffe: '#a89574', blason: '#6a5a48', laine: '#5a5040', cuir: '#5a3e26', cheveux: '#6e6050', peau: '#cf9f7c' }, yeux: '#5a4630', coiffes: ['bonnet'], couleurCoiffe: 0x7a3f30, objet: 'marteau' },
     activite: { fond: 'attendre_fort', gestes: ['travailler', 'forger', 'designer', 'souffler'], periode: [5, 11] },
     tenue: { cotte: 0x9a8a6a, chausses: 0x5a5040, coiffe: 'bonnet', couleurCoiffe: 0x7a4a3a, tablier: 0x6a5a48, arme: 'marteau' },
     accueil: "Attention aux pierres ! Girard, maçon. J'entretiens les murailles. Elles sont vieilles, tu sais : les premières ont été montées du temps du sire Gaucher, il y a plus de deux cent cinquante ans.",
@@ -122,7 +122,7 @@ export const PERSONNAGES = [
   },
   {
     id: 'huguenin', nom: 'Huguenin', role: 'garde de la porte', pos: 'porte',
-    studio: { sexe: 'M', pieces: ['haubert', 'surcot', 'chausses', 'bottes', 'ceinture_large', 'coupe_courte', 'barbe'], teintes: { blason: '#7a2a24', etoffe: '#d9c48a', laine: '#33312e', cuir: '#3a2a1c', cheveux: '#2e2218', metal: '#a8acb0' }, coiffes: ['chapel'], objet: 'lance' },
+    studio: { sexe: 'M', pieces: ['haubert', 'surcot', 'chausses', 'bottes', 'ceinture_large'], coupe: 'coiffure_courte', barbe: 'barbe_courte', teintes: { blason: '#d4bd7c', etoffe: '#7a2a24', laine: '#7a2a24', cuir: '#3a2a1c', cheveux: '#2e2218', metal: '#a8acb0', peau: '#d2a583' }, yeux: '#4a3424', coiffes: ['chapel'], objet: 'lance' },
     activite: { fond: 'attendre_fort', gestes: ['guetter', 's_etirer', 'attendre_agite'], periode: [9, 18] },
     tenue: { cotte: 0x6a2f2a, chausses: 0x33312e, coiffe: 'casque', couleurCoiffe: 0x8b9096, arme: 'lance' },
     accueil: "On ne passe pas sans montrer patte blanche ! Huguenin, garde de la porte. Par les temps qui courent, je ne laisse entrer que ceux que je connais.",
@@ -137,7 +137,7 @@ export const PERSONNAGES = [
   },
   {
     id: 'jehanne', nom: 'Jehanne', role: 'paysanne', pos: [36, -28],
-    studio: { sexe: 'F', pieces: ['tunique', 'chausses', 'bottes', 'ceinture', 'coupe_longue'], teintes: { etoffe: '#4f6a7a', blason: '#b8aa8a', laine: '#5a4a3a', cuir: '#5a3e26', cheveux: '#8a5a2c' }, coiffes: ['coiffe'], couleurCoiffe: 0xd9d2bf, objet: 'panier' },
+    studio: { sexe: 'F', pieces: ['tunique', 'bottes', 'ceinture'], robe: { couleur: '#4f6a7a', tablier: '#cfc4a6' }, teintes: { etoffe: '#56717f', blason: '#b8aa8a', laine: '#5a4a3a', cuir: '#5a3e26', cheveux: '#8a5a2c', peau: '#dfb18f' }, yeux: '#3f7a4a', coiffes: ['coiffe'], couleurCoiffe: 0xd9cfb6, objet: 'panier' },
     activite: { fond: 'attendre', gestes: ['recolter', 'ramasser', 'saluer'], periode: [6, 13] },
     tenue: { cotte: 0x4f6a7a, chausses: 0x5a4a3a, coiffe: 'coiffe', couleurCoiffe: 0xd9d2bf, tablier: 0xb8aa8a },
     accueil: "Petit, petit, petit… Oh ! Tu m'as fait peur. Je suis Jehanne. J'apporte les poules de la redevance, et je repars avec moins que je ne suis venue, comme toujours.",
@@ -152,7 +152,7 @@ export const PERSONNAGES = [
   },
   {
     id: 'colin', nom: 'Colin', role: 'gardien du colombier', pos: 'colombier',
-    studio: { sexe: 'M', pieces: ['tunique', 'chausses', 'bottes', 'ceinture', 'coupe_mi_longue'], teintes: { etoffe: '#7a6a3a', blason: '#5a4a30', laine: '#4a4030', cuir: '#5a3e26', cheveux: '#9a7a4a' }, coiffes: ['chapeau'], couleurCoiffe: 0xc9b06a },
+    studio: { sexe: 'M', pieces: ['tunique', 'chausses', 'bottes', 'ceinture'], coupe: 'coiffure_mi_longue', age: 0.35, teintes: { etoffe: '#8a7438', blason: '#5a4a30', laine: '#4a4030', cuir: '#5a3e26', cheveux: '#9a7d52', peau: '#d8a988' }, yeux: '#7b8794', coiffes: ['chapeau'], couleurCoiffe: 0xc9a85a },
     activite: { fond: 'attendre', gestes: ['designer', 'perplexe', 'rire'], periode: [8, 16] },
     tenue: { cotte: 0x7a6a3a, chausses: 0x4a4030, coiffe: 'chapeau', couleurCoiffe: 0xc9b06a },
     accueil: "Chut, tu vas effrayer mes pigeons ! Je suis Colin. Ce colombier, c'est l'orgueil du seigneur… et le malheur des laboureurs.",
@@ -191,7 +191,7 @@ export const FIGURANTS = [
     activite: { fond: 'attendre', gestes: ['recolter', 'recolter', 'souffler'], periode: [3, 7] } },
   { id: 'forgeron', pos: [49, -29], studio: { sexe: 'M', pieces: ['tunique', 'chausses', 'bottes', 'ceinture_large', 'coupe_courte', 'barbe'], teintes: { etoffe: '#5a4a3a', laine: '#2e2a26', cuir: '#3a2a1c', cheveux: '#1e1a16' }, objet: 'marteau' },
     activite: { fond: 'attendre_fort', gestes: ['forger', 'forger', 'souffler'], periode: [2.5, 6] } },
-  { id: 'porteuse', pos: [-4, -12], studio: { sexe: 'F', pieces: ['tunique', 'chausses', 'bottes', 'ceinture', 'coupe_mi_longue'], teintes: { etoffe: '#8a7a5a', laine: '#4a3a2a', cuir: '#4a3220', cheveux: '#5a3a22' }, coiffes: ['coiffe'] },
+  { id: 'porteuse', pos: [-4, -12], studio: { sexe: 'F', pieces: ['tunique', 'bottes', 'ceinture'], robe: { couleur: '#7d6c4c', tablier: '#d6cbb0' }, teintes: { etoffe: '#8a7a5a', laine: '#4a3a2a', cuir: '#4a3220', cheveux: '#5a3a22' }, coiffes: ['coiffe'] },
     activite: { fond: 'attendre', marche: 'porter', chemin: [[-6, -14], [-9, -3], [-2, 6], [7, 3], [2, -8]] } },
   { id: 'sergent', pos: [24, -32], studio: { sexe: 'M', pieces: ['gambison', 'chausses', 'bottes', 'ceinture_large', 'coupe_courte', 'barbe'], teintes: { etoffe: '#5a5a48', cuir: '#3a2a1c', laine: '#33312e', cheveux: '#3a2a1c' }, coiffes: ['chapel'], objet: 'lance' },
     activite: { fond: 'attendre', marche: 'patrouiller', chemin: [[24, -32], [38, -40], [50, -24], [36, -18]] } },
@@ -201,3 +201,47 @@ export const FIGURANTS = [
 export const MASURES = [
   [46, -46, 20, 6.5, 4.2], [58, -40, -30, 6, 4], [30, -58, 70, 7, 4.2], [48, -62, 10, 5.5, 3.8], [16, -50, -15, 5, 3.6], [62, -56, 50, 6, 4],
 ];
+
+// ---- routines de métier (habitants animés du Studio) : postes de travail reliés par des trajets à pied.
+// a : 'base' (place de l'habitant), 'puits' (au bord du puits) ou [dx, dy] en mètres depuis la base ;
+// vers : ce qu'il regarde au poste ('puits', 'colombier', 'objet' ou [dx, dy] depuis le poste) ;
+// objet : meuble ou ouvrage posé au poste (banc, bloc de pierre, enclume) ; porte : il porte son seau sur ce trajet.
+// L'habitant s'interrompt quand le voyageur s'approche, et reprend ensuite.
+export const ROUTINES = {
+  guillemette: { trajet: 'marcher', postes: [
+    { a: 'base', fond: 'attendre', gestes: ['ramasser', 'ranger', 'designer'], periode: [4, 8], duree: [16, 26] },
+    { a: [3.5, 4.5], trajet: 'porter', fond: 'attendre', gestes: ['ramasser', 'examiner'], periode: [3, 6], duree: [10, 16] }] },
+  aubert: { trajet: 'marcher_pensif', postes: [
+    { a: 'base', fond: 'attendre', gestes: ['designer', 'examiner', 'hausser_epaules'], periode: [6, 11], duree: [14, 22] },
+    { a: [-5, 2], fond: 'attendre', gestes: ['examiner', 'designer'], periode: [4, 8], duree: [10, 16] }] },
+  mahaut: { trajet: 'porter', objetMarche: 'seau', postes: [
+    { a: 'puits', vers: 'puits', fond: 'attendre', gestes: ['tirer_corde', 'tirer_corde', 'hisser'], periode: [1.2, 3.5], duree: [16, 26] },
+    { a: { arche: 0, d: 1.7 }, porte: true, fond: 'attendre', gestes: ['se_rechauffer', 'ranger', 'designer'], periode: [4, 8], duree: [10, 16] }] },
+  etienne: { trajet: 'marcher_pensif', postes: [
+    { a: 'base', objet: 'banc', fond: 'assis', gestes: [], periode: [9, 9], duree: [22, 34] },
+    { a: [3, 2], fond: 'attendre', gestes: ['prier'], periode: [5, 9], duree: [10, 15] }] },
+  perrin: { trajet: 'patrouiller', postes: [
+    { a: 'base', fond: 'guetter', gestes: ['s_etirer', 'souffler'], periode: [8, 14], duree: [14, 22] },
+    { a: [7, 3], ou: [[5, -4], [0, 6], [-6, 2]], fond: 'guetter', gestes: ['guetter'], periode: [6, 10], duree: [10, 16] }] },
+  girard: { trajet: 'marcher', postes: [
+    { a: 'base', objet: 'bloc', vers: 'objet', fond: 'attendre_fort', gestes: ['forger'], periode: [0.4, 1.4], duree: [18, 28] },
+    { a: [2.5, 4], fond: 'attendre', gestes: ['hisser', 'examiner'], periode: [2, 5], duree: [8, 12] }] },
+  huguenin: { trajet: 'patrouiller', postes: [
+    { a: 'base', fond: 'guetter', gestes: ['s_etirer', 'attendre_agite'], periode: [9, 16], duree: [16, 26] },
+    { a: [2.5, 0], fond: 'guetter', gestes: [], periode: [9, 9], duree: [8, 12] }] },
+  jehanne: { trajet: 'marcher', postes: [
+    { a: 'base', fond: 'attendre', gestes: ['recolter', 'ramasser'], periode: [1.5, 4], duree: [16, 24] },
+    { a: [-4, 2.5], fond: 'attendre', gestes: ['recolter', 'saluer'], periode: [2, 5], duree: [10, 16] }] },
+  colin: { trajet: 'marcher', postes: [
+    { a: 'base', vers: 'colombier', fond: 'attendre', gestes: ['recolter'], periode: [2, 5], duree: [14, 22] },
+    { a: [2.5, -1.5], vers: 'colombier', fond: 'attendre', gestes: ['recolter', 'examiner'], periode: [2, 5], duree: [10, 14] }] },
+  forgeron: { trajet: 'marcher', postes: [
+    { a: 'base', objet: 'enclume', vers: 'objet', fond: 'attendre_fort', gestes: ['forger'], periode: [0.3, 1.0], duree: [40, 60] },
+    { a: [-2, 2], fond: 'attendre', gestes: ['se_rechauffer', 'souffler'], periode: [2, 4], duree: [6, 10] }] },
+  palefrenier: { trajet: 'marcher', postes: [
+    { a: 'base', vers: [3, -2], fond: 'attendre', gestes: ['travailler', 'ramasser'], periode: [2, 5], duree: [20, 30] },
+    { a: [-3, 1.5], trajet: 'porter', fond: 'attendre', gestes: ['ramasser', 'fendre'], periode: [2, 4], duree: [8, 12] }] },
+  jardinier: { trajet: 'marcher', postes: [
+    { a: 'base', fond: 'attendre', gestes: ['recolter', 'recolter', 'souffler'], periode: [1.5, 4], duree: [20, 30] },
+    { a: [2.5, 1], fond: 'attendre', gestes: ['recolter'], periode: [1.5, 4], duree: [15, 20] }] },
+};
