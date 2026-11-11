@@ -1,0 +1,9 @@
+{
+ "source": "Morceaux composés par Aurélien avec Suno (dossier C:\\CPE\\Portail-Vie-Scolaire), réencodés en 96 kb/s pour le web",
+ "volume": 0.32,
+ "pistes": [
+  { "fichier": "salles_de_pierre.mp3", "titre": "Silent Halls of Stone" },
+  { "fichier": "choeur_de_pierre.mp3", "titre": "Stone Choir in the Citadel" },
+  { "fichier": "citadelle_de_minuit.mp3", "titre": "Midnight Citadel" }
+ ]
+}

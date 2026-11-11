@@ -1,0 +1,24 @@
+{
+ "source": "Codex, commande ORI-P01 (11 novembre 2026)",
+ "portraits": {
+  "guillemette_neutre": "guillemette_neutre.webp",
+  "guillemette_amical": "guillemette_amical.webp",
+  "aubert_neutre": "aubert_neutre.webp",
+  "aubert_amical": "aubert_amical.webp",
+  "mahaut_neutre": "mahaut_neutre.webp",
+  "mahaut_amical": "mahaut_amical.webp",
+  "etienne_neutre": "etienne_neutre.webp",
+  "etienne_amical": "etienne_amical.webp",
+  "perrin_neutre": "perrin_neutre.webp",
+  "perrin_amical": "perrin_amical.webp",
+  "girard_neutre": "girard_neutre.webp",
+  "girard_amical": "girard_amical.webp",
+  "huguenin_neutre": "huguenin_neutre.webp",
+  "huguenin_amical": "huguenin_amical.webp",
+  "jehanne_neutre": "jehanne_neutre.webp",
+  "jehanne_amical": "jehanne_amical.webp",
+  "colin_neutre": "colin_neutre.webp",
+  "colin_amical": "colin_amical.webp",
+  "voyageur": "voyageur.webp"
+ }
+}

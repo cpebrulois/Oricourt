@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<link rel="icon" href="data:,">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oricourt — le château en 3D et le jeu de l'an 1435</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --encre: #f3ead8; --encre-2: #cdbf9f; --or: #d9a441; --or-2: #b9822a;
+    --fond: rgba(24, 20, 14, 0.78); --fond-2: rgba(36, 30, 21, 0.9); --bord: rgba(217, 164, 65, 0.35);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #c9d6e3; font-family: Inter, system-ui, sans-serif; color: var(--encre); }
+  #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  .panneau { position: fixed; background: var(--fond); border: 1px solid var(--bord); border-radius: 10px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  #entete { top: 12px; left: 12px; padding: 10px 14px 10px; max-width: 340px; }
+  #entete h1 { font-family: "Cormorant Garamond", Georgia, serif; font-size: 25px; line-height: 1.05; margin: 0; color: var(--encre); letter-spacing: .2px; }
+  #entete .sous { font-size: 11.5px; color: var(--encre-2); margin-top: 3px; }
+  .groupe { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
+  button { font: 600 12.5px Inter, system-ui, sans-serif; color: var(--encre); background: rgba(255,255,255,0.06); border: 1px solid rgba(243,234,216,0.22); border-radius: 7px; padding: 7px 10px; cursor: pointer; }
+  button:hover { border-color: var(--or); }
+  button.actif { background: var(--or); color: #1d1608; border-color: var(--or); }
+  #lieux { top: 12px; right: 12px; width: 250px; max-height: calc(100% - 24px); overflow: auto; padding: 8px; }
+  #lieux h2 { font: 600 11px Inter, sans-serif; text-transform: uppercase; letter-spacing: 1.2px; color: var(--encre-2); margin: 4px 6px 6px; }
+  #lieux ol { list-style: none; margin: 0; padding: 0; }
+  #lieux li { display: flex; gap: 8px; align-items: center; padding: 6px 6px; border-radius: 7px; cursor: pointer; font-size: 13px; }
+  #lieux li:hover, #lieux li.sel { background: rgba(217,164,65,0.16); }
+  .pastille { flex: 0 0 auto; width: 21px; height: 21px; border-radius: 50%; background: var(--or); color: #1d1608; font: 700 11px Inter, sans-serif; display: grid; place-items: center; }
+  .pastille.q { background: #8fb7d9; }
+  #fiche { left: 12px; bottom: 12px; width: min(420px, calc(100% - 24px)); padding: 13px 15px 12px; display: none; }
+  #fiche h3 { font-family: "Cormorant Garamond", Georgia, serif; font-size: 22px; margin: 0 26px 6px 0; line-height: 1.1; }
+  #fiche p { font-size: 13.5px; line-height: 1.5; margin: 0 0 8px; color: var(--encre); }
+  #fiche .releve { font-size: 12px; color: #a9d0f0; border-left: 2px solid #6fa8d6; padding-left: 8px; }
+  #fiche .source { font-size: 11px; color: var(--encre-2); }
+  #fiche .fermer { position: absolute; top: 8px; right: 8px; padding: 3px 8px; }
+  #fiche .actions { display: flex; gap: 6px; margin-top: 4px; }
+  #marqueurs { position: fixed; inset: 0; pointer-events: none; }
+  .marqueur { position: absolute; transform: translate(-50%, -100%); pointer-events: auto; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+  .marqueur .pastille { box-shadow: 0 1px 6px rgba(0,0,0,0.45); border: 2px solid #fff6e0; width: 24px; height: 24px; }
+  .marqueur .tige { width: 2px; height: 14px; background: rgba(255,246,224,0.85); }
+  .marqueur .nom { position: absolute; bottom: 42px; white-space: nowrap; font-size: 12px; font-weight: 600; background: rgba(24,20,14,0.82); padding: 3px 7px; border-radius: 6px; opacity: 0; transition: opacity .15s; }
+  .marqueur:hover .nom, .marqueur.proche .nom { opacity: 1; }
+  #aide { right: 12px; bottom: 12px; padding: 9px 12px; font-size: 12px; color: var(--encre-2); max-width: 300px; line-height: 1.45; }
+  #aide b { color: var(--encre); }
+  #boussole { position: fixed; left: 50%; top: 14px; transform: translateX(-50%); width: 46px; height: 46px; border-radius: 50%; background: var(--fond); border: 1px solid var(--bord); display: grid; place-items: center; }
+  #boussole .aiguille { width: 4px; height: 34px; background: linear-gradient(#e2533f 50%, #f3ead8 50%); border-radius: 2px; }
+  #boussole .n { position: absolute; top: -2px; font: 700 10px Inter; color: #e2533f; }
+  #chargement { position: fixed; inset: 0; display: grid; place-items: center; background: linear-gradient(#2a2216, #14100a); z-index: 10; }
+  #chargement .boite { text-align: center; }
+  #chargement h2 { font-family: "Cormorant Garamond", Georgia, serif; font-size: 34px; margin: 0 0 8px; }
+  #chargement .barre { width: 260px; height: 4px; background: rgba(255,255,255,0.12); border-radius: 2px; overflow: hidden; margin: 12px auto 8px; }
+  #chargement .barre div { height: 100%; width: 0; background: var(--or); transition: width .2s; }
+  #chargement .etat { font-size: 12.5px; color: var(--encre-2); }
+  #bandeau { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); padding: 7px 12px; font-size: 12.5px; display: none; text-align: center; max-width: calc(100% - 24px); }
+  #manette { position: fixed; left: 26px; bottom: 26px; width: 120px; height: 120px; border-radius: 50%; background: rgba(24,20,14,0.35); border: 1px solid var(--bord); display: none; touch-action: none; }
+  #manette .bouton { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: rgba(217,164,65,0.75); }
+  .hypothese { color: #f0c27a; }
+  #b-carnet { display: none; }
+  body.en-jeu #b-carnet { display: inline-block; }
+  body.en-jeu #lieux, body.en-jeu #aide { display: none; }
+  #voile { position: fixed; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(circle, rgba(236,232,246,0.75), rgba(246,244,252,1)); transition: opacity .25s; }
+  #invite { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); display: none; background: var(--or); color: #1d1608; border-color: var(--or); font-size: 15px; padding: 11px 18px; box-shadow: 0 2px 14px rgba(0,0,0,.35); }
+  /* ---- fenêtre de dialogue, format de « La Stase » (cadres, bandeau et parchemin dessinés par Codex pour le Studio de vie) */
+  #dlg-fond { position: fixed; inset: 0; background: radial-gradient(ellipse at center, rgba(12,9,5,0.35), rgba(8,6,3,0.78)); display: none; z-index: 20; }
+  #dlg { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 21; display: none; flex-direction: column;
+    width: min(1120px, 94vw); height: min(780px, 90vh); box-sizing: border-box;
+    border: 32px solid transparent; border-image: url(studio/interface/cadre_fenetre.webp) 64 fill / 32px stretch; color: #efe4c9;
+    box-shadow: 0 20px 70px rgba(0,0,0,0.6); font-family: Inter, system-ui, sans-serif; }
+  #dlg .bandeau { height: 70px; flex: none; background: url(studio/interface/illustration_dialogue.webp) center / contain no-repeat; margin: -18px 0 0; position: relative; }
+  #dlg-partir { position: absolute; right: -14px; top: -10px; width: 36px; height: 36px; border-radius: 50%; padding: 0; font-size: 17px; }
+  #dlg .corps { flex: 1; min-height: 0; display: grid; grid-template-columns: 200px 1fr 200px; gap: 18px; padding: 4px 6px 0; }
+  .dlg-visage { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .dlg-cadre { position: relative; width: 200px; height: 250px; flex: none; }
+  .dlg-cadre canvas { position: absolute; left: 9px; top: 9px; width: 182px; height: 232px; background: #2a2016; }
+  .dlg-cadre::after { content: ""; position: absolute; inset: 0; background: url(studio/interface/portrait_dialogue.webp) 0 0 / 100% 100%; pointer-events: none; }
+  .dlg-nom { font: 600 21px "Cormorant Garamond", Georgia, serif; color: #f6e7bf; text-align: center; line-height: 1.1; }
+  .dlg-role { font-size: 12.5px; color: #cdbf9f; text-align: center; }
+  .dlg-att { font-size: 12px; padding: 2px 9px; border-radius: 10px; border: 1px solid rgba(217,164,65,0.5); color: #e9d6a6; }
+  .dlg-att[data-attitude="amical"] { border-color: #8fbf73; color: #cfe8bd; }
+  .dlg-att[data-attitude="serviable"] { border-color: #d9a441; color: #ffd98a; background: rgba(217,164,65,0.15); }
+  .dlg-rel { font-size: 12px; color: #b8aa88; text-align: center; font-style: italic; }
+  .dlg-centre { min-height: 0; display: flex; flex-direction: column; gap: 7px; }
+  .dlg-centre .orn { height: 18px; flex: none; background: url(studio/interface/ornement_titre.webp) center / contain no-repeat; opacity: 0.85; }
+  #dlg-historique { list-style: none; margin: 0; padding: 0 6px 0 0; max-height: 20%; overflow: auto; font-size: 13px; line-height: 1.45; color: #c9bb98; flex: none; }
+  #dlg-historique li { margin: 0 0 5px; } #dlg-historique li.moi { color: #a9c6de; } #dlg-historique li.narr { font-style: italic; }
+  #dlg-historique .qui, #dlg-replique .qui { font-weight: 600; color: #e8cf93; }
+  #dlg-replique { border-radius: 4px; padding: 11px 16px; color: #2d2212; background: url(studio/interface/fond_parchemin.webp) center / 512px; box-shadow: inset 0 0 18px rgba(80,50,20,0.35); flex: none; max-height: 40%; overflow: auto; }
+  #dlg-replique p { margin: 0 0 5px; font: 500 18px/1.4 "Cormorant Garamond", Georgia, serif; } #dlg-replique p:last-child { margin: 0; }
+  #dlg-replique .qui { color: #6b3a14; } #dlg-replique .dlg-narr { font-style: italic; font-size: 17px; color: #4b3a22; }
+  #dlg-issue { font-weight: 600; color: #ffd98a; text-align: center; font-size: 14.5px; }
+  #dlg-choix { list-style: none; margin: 0; padding: 0 6px 4px 0; overflow: auto; display: flex; flex-direction: column; gap: 3px; flex: 1; min-height: 0; }
+  .dlg-option { all: unset; box-sizing: border-box; cursor: pointer; display: flex; gap: 9px; width: 100%; padding: 3px 12px; font-size: 14.5px; line-height: 1.35; color: #f3e6c4;
+    border: 8px solid transparent; border-image: url(studio/interface/cadre_bouton_normal.webp) 24 fill / 8px stretch; }
+  .dlg-option:hover, .dlg-option:focus-visible { border-image-source: url(studio/interface/cadre_bouton_survol.webp); color: #fff3cf; }
+  .dlg-option .dlg-num { color: #e2b25a; font-weight: 700; min-width: 1.4em; }
+  .dlg-option.guide .dlg-texte { color: #ffe2a0; } .dlg-option.rapide { opacity: 0.85; } .dlg-comp { color: #ffcf6e; font-weight: 600; }
+  .dlg-option.dlg-autre-replique .dlg-texte { font-style: italic; color: #d7c9a7; }
+  .dlg-libre-form textarea { width: 100%; box-sizing: border-box; font: 15px/1.4 Inter, sans-serif; padding: 9px 11px; border-radius: 6px; border: 1px solid rgba(217,164,65,0.5); background: rgba(20,15,9,0.8); color: #f3ead8; resize: none; }
+  .dlg-libre-actions { display: flex; gap: 8px; margin-top: 7px; } .dlg-libre-actions .dlg-option { width: auto; }
+  .dlg-aide { font-size: 11.5px; color: #9d906f; text-align: center; flex: none; }
+  #b-musique[aria-pressed="false"] { opacity: 0.55; text-decoration: line-through; }
+  html.dialogue-ouvert #invite, html.dialogue-ouvert #manette { display: none !important; }
+  @media (max-width: 760px) {
+    #dlg { width: 100vw; height: 100dvh; border-width: 18px; border-image-width: 18px; }
+    #dlg .bandeau { height: 48px; margin: -8px 0 0; }
+    #dlg .corps { grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr; gap: 8px; }
+    .dlg-centre { grid-column: 1 / 3; grid-row: 2; }
+    .dlg-visage.moi { grid-column: 1; grid-row: 1; } .dlg-visage.lui { grid-column: 2; grid-row: 1; }
+    .dlg-cadre { width: 96px; height: 120px; } .dlg-cadre canvas { left: 4px; top: 4px; width: 88px; height: 112px; }
+    .dlg-nom { font-size: 17px; } .dlg-rel, .dlg-aide { display: none; }
+    #dlg-replique p { font-size: 17px; }
+  }
+  #carnet { right: 12px; top: 12px; width: min(380px, calc(100% - 24px)); max-height: calc(100% - 24px); overflow: auto; padding: 14px 16px; display: none; background: var(--fond-2); z-index: 4; }
+  #carnet h3 { font-family: "Cormorant Garamond", Georgia, serif; font-size: 23px; margin: 0 26px 8px 0; }
+  #carnet ul { list-style: none; margin: 0 0 10px; padding: 0; } #carnet li { font-size: 13.5px; line-height: 1.45; padding: 7px 0; border-bottom: 1px solid rgba(243,234,216,0.12); }
+  #carnet li.vide { color: var(--encre-2); } #carnet .fermer { position: absolute; top: 8px; right: 8px; padding: 3px 8px; }
+  #ecran { position: fixed; inset: 0; display: none; place-items: center; background: rgba(20,16,26,0.82); z-index: 8; padding: 16px; }
+  #ecran .boite { max-width: 620px; background: var(--fond-2); border: 1px solid var(--bord); border-radius: 12px; padding: 24px 26px; }
+  #ecran h2 { font-family: "Cormorant Garamond", Georgia, serif; font-size: 34px; margin: 0 0 12px; } #ecran p { font-size: 16px; line-height: 1.6; margin: 0 0 12px; }
+  #ecran button { background: var(--or); color: #1d1608; border-color: var(--or); font-size: 15px; padding: 11px 18px; }
+  .marqueur.pnj { transform: translate(-50%, -100%); flex-direction: column; gap: 3px; }
+  .marqueur.pnj .etiq { display: none; flex-direction: column; align-items: center; background: rgba(24,20,14,0.85); border-radius: 7px; padding: 4px 9px; font-size: 12.5px; white-space: nowrap; }
+  .marqueur.pnj .etiq i { font-size: 11px; color: var(--encre-2); font-style: normal; }
+  .marqueur.pnj.pres .etiq { display: flex; }
+  .marqueur.pnj .sceau { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: #6b5bb5; color: #fff; font-weight: 700; border: 2px solid #fff6e0; box-shadow: 0 1px 6px rgba(0,0,0,.45); }
+  .marqueur.pnj.fait .sceau { background: var(--or); color: #1d1608; }
+  @media (max-width: 760px) {
+    #lieux { top: auto; bottom: 12px; right: 12px; width: 170px; max-height: 38%; }
+    #entete { max-width: calc(100% - 24px); }
+    #entete h1 { font-size: 21px; }
+    #aide { display: none; }
+    #fiche { bottom: auto; top: 150px; }
+  }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./lib/three.module.min.js" } }
+</script>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div id="marqueurs"></div>
+
+<div id="entete" class="panneau">
+  <h1>Château d'Oricourt</h1>
+  <div class="sous">Maquette 3D · relevé LiDAR HD de l'IGN, à l'échelle réelle</div>
+  <div class="groupe" role="group" aria-label="Navigation">
+    <button id="b-survol" class="actif">Survol</button>
+    <button id="b-pied">Visite à pied</button>
+  </div>
+  <div class="groupe" role="group" aria-label="Époque">
+    <button id="b-actuel" class="actif">Aujourd'hui</button>
+    <button id="b-medieval">Fin du Moyen Âge <span class="hypothese">(esquisse)</span></button>
+  </div>
+  <div class="groupe" role="group" aria-label="Jeu">
+    <button id="b-jeu">⏳ Jouer : l'an 1435</button>
+    <button id="b-carnet">Carnet</button>
+    <button id="b-musique" title="Musique d'ambiance (en 1435)" aria-pressed="true">♪ Musique</button>
+  </div>
+</div>
+
+<div id="boussole" title="Nord"><span class="n">N</span><div class="aiguille"></div></div>
+
+<div id="lieux" class="panneau">
+  <h2>Lieux à explorer</h2>
+  <ol id="liste"></ol>
+</div>
+
+<div id="fiche" class="panneau" role="dialog" aria-live="polite">
+  <button class="fermer" id="f-fermer" aria-label="Fermer">✕</button>
+  <h3 id="f-titre"></h3>
+  <div id="f-texte"></div>
+  <div class="actions"><button id="f-aller">M'y rendre à pied</button></div>
+</div>
+
+<div id="aide" class="panneau"></div>
+<div id="bandeau" class="panneau"></div>
+<div id="voile"></div>
+<button id="invite"></button>
+<div id="dlg-fond"></div>
+<div id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-nom">
+  <div class="bandeau"><button id="dlg-partir" aria-label="Partir (Échap)">✕</button></div>
+  <div class="corps">
+    <div class="dlg-visage moi"><div class="dlg-cadre"><canvas id="dlg-moi" width="182" height="232"></canvas></div><div class="dlg-nom">Toi</div><div class="dlg-role">voyageur venu de l'an 2026</div></div>
+    <div class="dlg-centre">
+      <ol id="dlg-historique" aria-label="Échange" hidden></ol>
+      <div id="dlg-replique" aria-live="polite"></div>
+      <div id="dlg-issue" hidden></div>
+      <div class="orn"></div>
+      <ol id="dlg-choix"></ol>
+      <div class="dlg-aide">Touches 1 à 9 pour choisir · Échap pour partir</div>
+    </div>
+    <div class="dlg-visage lui"><div class="dlg-cadre"><canvas id="dlg-lui" width="364" height="464"></canvas></div><div class="dlg-nom" id="dlg-nom"></div><div class="dlg-role" id="dlg-role"></div><span class="dlg-att" id="dlg-attitude"></span><div class="dlg-rel" id="dlg-relation"></div></div>
+  </div>
+</div>
+<div id="carnet" class="panneau"><button class="fermer" id="carnet-fermer" aria-label="Fermer">✕</button><h3>Carnet du voyageur</h3><ul id="carnet-liste"></ul><button id="carnet-zero" class="discret">Recommencer le jeu à zéro</button></div>
+<div id="ecran"></div>
+<div id="manette"><div class="bouton"></div></div>
+
+<div id="chargement">
+  <div class="boite">
+    <h2>Oricourt</h2>
+    <div class="etat" id="c-etat">Chargement du relevé…</div>
+    <div class="barre"><div id="c-barre"></div></div>
+    <div class="etat">IGN LiDAR HD · BD TOPO · textures du Studio</div>
+  </div>
+</div>
+
+<script type="module" src="./main.js"></script>
+</body>
+</html>
