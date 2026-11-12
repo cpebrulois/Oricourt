@@ -1778,16 +1778,17 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
     if (postes.length > 1 && !libreSur([postes[postes.length - 1].x, postes[postes.length - 1].y], [postes[0].x, postes[0].y])) postes.length = 1;
     return { trajet: R.trajet || 'marcher', postes };
   }
-  const HUMAINS_STUDIO = false;
+  // Personnages Meshy (12 novembre) : un modèle texturé et animé par habitant, dans studio/meshy/. Les habitants habillés
+  // du Studio (désactivés le 11 novembre : postures jugées étranges) ne servent plus que si un modèle Meshy manque.
+  const MESHY = new Set(['guillemette', 'aubert', 'mahaut', 'etienne', 'perrin', 'girard', 'huguenin', 'jehanne', 'colin',
+    'palefrenier', 'jardinier', 'forgeron', 'porteuse', 'sergent']);
   JEU.chargerVivants = () => {
     if (VIV.etat !== 'attente') return; VIV.etat = 'charge';
     annoncer('Les habitants de 1435 arrivent…');
-    // HUMAINS_STUDIO : habitants habillés du Studio (désactivés le 11 novembre : postures jugées étranges ; on garde les
-    // figurines en attendant les modèles Meshy). Les bêtes restent animées.
-    const habitants = !HUMAINS_STUDIO ? [] : [
+    const habitants = [
       ...JEU.pnj.map((p) => ({ id: p.id, desc: { ...p.studio, objetMarche: (ROUTINES[p.id] || {}).objetMarche }, act: p.activite, objet: p.g, routine: routineDe(p.id, [p.x, p.y]) })),
       ...figurants.map((f) => ({ id: f.id, desc: f.studio, act: f.activite, objet: f.g, routine: f.activite.marche ? null : routineDe(f.id, [f.g.position.x, -f.g.position.z]) })),
-    ];
+    ].filter((h) => MESHY.has(h.id)).map((h) => ({ ...h, meshy: h.id }));
     JEU.routines = Object.fromEntries(habitants.map((h) => [h.id, h.routine]));
     chargerVivants({ groupeBetes, betes: BETES, habitants, sol: (x, y) => hauteurSol(x, y), libre: (x, y) => dansLePasse(() => !bloque(x, y)) && !planchers.some((p) => Math.hypot(x - p.c[0], y - p.c[1]) < p.r + 0.5) })
       .then((m) => {

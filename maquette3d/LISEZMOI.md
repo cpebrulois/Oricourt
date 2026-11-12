@@ -7,6 +7,7 @@ Maquette du château d'Oricourt à l'échelle réelle, tirée du relevé LiDAR H
 - **Sources** :
   - relevé IGN (LiDAR HD, BD TOPO, BD ORTHO), sous licence ouverte Etalab 2.0, avec la mention « IGN » ;
   - textures et portraits peints par Codex ;
-  - animaux, vêtements et animations repris du Studio de vie ;
+  - habitants modélisés, texturés et animés avec Meshy (`studio/meshy/`, un modèle par personnage) ;
+  - animaux repris du Studio de vie ;
   - musique d'ambiance composée par Aurélien avec Suno.
 - **Hypothèses** : l'esquisse médiévale reste à valider avec le propriétaire.

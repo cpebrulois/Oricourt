@@ -4,6 +4,8 @@
 //     teintes par masque, zones du corps cachées sous les vêtements (studio/habillage/habillage.json) ;
 //   - mouvements : clips de la bibliothèque du Studio reciblés sur le squelette commun (studio/mouvements/mouvements.json),
 //     tirés par intention (attendre, parler, guetter, travailler…).
+//   - personnages Meshy (12 novembre) : un modèle texturé, riggé et animé par habitant (studio/meshy/), qui remplace
+//     l'habillage du Studio pour les quatorze habitants du jeu ; voir « personnages Meshy » plus bas.
 // Les objets de la maquette (figurines de secours) restent en place tant que les modèles ne sont pas chargés.
 import * as THREE from 'three';
 import { GLTFLoader } from './lib/jsm/loaders/GLTFLoader.js';
@@ -171,6 +173,7 @@ class Habitant {
       const a = this.mixer.clipAction(clip);
       if (!this.mvt.boucle(cle)) { a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; }
       a.userData = { cle, v: this.mvt.vitesse(cle) };
+      if (this.mvt.vitesseA && this.mvt.vitesseA(cle, 0) != null) { const m = this.mvt; Object.defineProperty(a.userData, 'v', { get: () => m.vitesseA(cle, a.time) }); }
       this.actions.set(k, a);
     }
     return this.actions.get(k);
@@ -286,17 +289,105 @@ class Bete {
   }
 }
 
+// ------------------------------------------------------------------------------------------------ personnages Meshy
+// Modèles créés dans Meshy (image → 3D → texture → squelette Mixamo → clips de la bibliothèque Meshy), un fichier par
+// personnage : studio/meshy/<id>.modele.json. Les intentions du jeu sont traduites en clips Meshy, par ordre de préférence
+// (le premier que le personnage possède est pris) ; une intention inconnue donne l'attente.
+const MESHY_ATTENTES = ['Long_Breathe_and_Look_Around', 'Short_Breathe_and_Look_Around', 'Axe_Breathe_and_Look_Around'];   // la dernière, accroupie, en secours
+const MESHY_MARCHES = ['Elderly_Shaky_Walk', 'Walking_Woman', 'Casual_Walk', 'Walking'];
+const MESHY_INTENTIONS = {
+  parler: ['Talk_with_Hands_Open'], assis_parler: ['Talk_with_Hands_Open'],
+  marcher: MESHY_MARCHES, marcher_pensif: MESHY_MARCHES,
+  patrouiller: ['Spear_Walk', 'Casual_Walk', 'Walking_Woman', 'Walking'],
+  porter: ['Carry_Water_Bucket_Walk', 'Carry_Heavy_Object_Walk', 'Walking_Woman', 'Walking'],
+  forger: ['Heavy_Hammer_Swing'], fendre: ['Heavy_Hammer_Swing'], travailler: ['Heavy_Hammer_Swing', 'Female_Stand_Pick_Fruit_Basket'],
+  ramasser: ['Female_Stand_Pick_Fruit_Basket'], recolter: ['Female_Stand_Pick_Fruit_Basket'],
+};
+// allures (m/s) des cycles sur place, mesurées sur le rythme des pas ; les clips qui avancent (seau, charge, vieillard)
+// gardent leur propre avance, accélérée d'un tempo, et ne glissent pas.
+const MESHY_ALLURE = { Walking: 1.2, Walking_Woman: 1.1, Casual_Walk: 0.85, Spear_Walk: 1.05, Running: 3 };
+const MESHY_TEMPO = { Carry_Water_Bucket_Walk: 1.7, Carry_Heavy_Object_Walk: 1.4, Elderly_Shaky_Walk: 1.5 };
+const MESHY_BOUCLES = new Set([...MESHY_ATTENTES, 'Talk_with_Hands_Open', 'Running', ...MESHY_MARCHES, 'Spear_Walk', 'Carry_Water_Bucket_Walk', 'Carry_Heavy_Object_Walk']);
+
+/** Les clips d'un personnage Meshy, avec la même interface que la bibliothèque du Studio (clesDe, clip, boucle, vitesse). */
+class MouvementsMeshy {
+  constructor(clips, hanches) {
+    this.src = new Map(clips.map((c) => [c.name, c])); this.prets = new Map(); this.info = new Map(); this.profil = new Map();
+    this.repos = hanches ? hanches.position.clone() : new THREE.Vector3();
+  }
+  clesDe(intention) {
+    const pref = MESHY_INTENTIONS[intention] || MESHY_ATTENTES;
+    const c = pref.find((n) => this.src.has(n));
+    return c ? [c] : [];
+  }
+  boucle(cle) { return MESHY_BOUCLES.has(cle); }
+  vitesse(cle) { this.clip(cle); return (this.info.get(cle) || {}).v || 1; }
+  /** Allure instantanée (m/s) d'un clip qui avance, au temps `t` : moyenne glissante sur une demi-seconde. */
+  vitesseA(cle, t) {
+    const P = this.profil.get(cle); if (!P) return null;
+    const sA = (x) => { x = ((x % P.T) + P.T) % P.T; let i = 1; while (i < P.t.length - 1 && P.t[i] < x) i++;
+      const f = (x - P.t[i - 1]) / ((P.t[i] - P.t[i - 1]) || 1); return P.s[i - 1] + (P.s[i] - P.s[i - 1]) * Math.min(1, Math.max(0, f)); };
+    const a = t - 0.25, b = t + 0.25;
+    let d = sA(b) - sA(a);
+    if (Math.floor(b / P.T) !== Math.floor(a / P.T)) d += P.L;   // tour de boucle
+    return Math.max(0, d / 0.5);
+  }
+  /** Clip prêt à jouer : bassin ramené au-dessus de ses pieds (avance retirée), tempo appliqué. */
+  clip(cle) {
+    if (this.prets.has(cle)) return this.prets.get(cle);
+    const src = this.src.get(cle); if (!src) return null;
+    const tempo = MESHY_TEMPO[cle] || 1, r = this.repos;
+    let avance = 0;
+    const pistes = src.tracks.map((t) => {
+      if (!/Hips\.position$/.test(t.name)) return t;
+      const v = Float32Array.from(t.values), n = t.times.length, T = t.times[n - 1] || 1;
+      const dx = v[(n - 1) * 3] - v[0], dz = v[(n - 1) * 3 + 2] - v[2];
+      avance = Math.hypot(dx, dz) / T;
+      if (avance > 0.05) {   // clip qui avance : profil d'avance le long de sa direction, pour suivre ses arrêts (se pencher, poser)
+        const ux = dx / (avance * T), uz = dz / (avance * T), s = new Float32Array(n);
+        for (let i = 0; i < n; i++) s[i] = (v[i * 3] - v[0]) * ux + (v[i * 3 + 2] - v[2]) * uz;
+        this.profil.set(cle, { t: Float32Array.from(t.times, (x) => x / tempo), s, T: T / tempo, L: s[n - 1] });
+      }
+      const x0 = v[0], z0 = v[2], boucle = this.boucle(cle);
+      for (let i = 0; i < n; i++) {
+        const f = boucle ? t.times[i] / T : 0;
+        v[i * 3] = r.x + (v[i * 3] - x0 - dx * f); v[i * 3 + 2] = r.z + (v[i * 3 + 2] - z0 - dz * f);
+      }
+      return new THREE.VectorKeyframeTrack(t.name, t.times, v);
+    });
+    const times = (p) => { if (tempo === 1) return p; const q = p.clone(); q.times = Float32Array.from(p.times, (x) => x / tempo); return q; };
+    const c = new THREE.AnimationClip(cle, src.duration / tempo, pistes.map(times));
+    this.prets.set(cle, c);
+    this.info.set(cle, { v: MESHY_ALLURE[cle] || (avance > 0.05 ? avance * tempo : 1) });
+    return c;
+  }
+}
+
+async function habillerMeshy(id) {
+  const g = await glb('meshy/' + id + '.glb');
+  const racine = g.scene, os = new Map(), maillages = [];
+  racine.traverse((o) => {
+    if (o.isBone) os.set(o.name.replace(/^mixamorig:?/, ''), o);
+    if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; maillages.push(o); }
+  });
+  const boite = new THREE.Box3().setFromObject(racine);
+  const corps = { id: 'meshy_' + id, taille_m: boite.max.y - boite.min.y, hanches_pos: os.get('Hips') ? os.get('Hips').position.toArray() : [0, 1, 0] };
+  return { racine, os, corps, maillages, mixer: new THREE.AnimationMixer(racine), hauteur: corps.taille_m, objetMarche: null,
+    mvt: new MouvementsMeshy(g.animations, os.get('Hips')) };
+}
+
 // ------------------------------------------------------------------------------------------------ chargement
 export async function chargerVivants(ctx) {
-  const mvt = await Mouvements.charger();
-  const hab = await Habilleur.charger(mvt);
+  const studio = ctx.habitants.filter((h) => !h.meshy);
+  const mvt = studio.length ? await Mouvements.charger() : null;
+  const hab = studio.length ? await Habilleur.charger(mvt) : null;
   const intentions = new Set();
-  for (const h of ctx.habitants) {
+  for (const h of studio) {
     intentions.add(h.act.fond); for (const g of h.act.gestes || []) intentions.add(g); if (h.act.marche) intentions.add(h.act.marche);
     if (h.routine) { intentions.add(h.routine.trajet); for (const p of h.routine.postes) { intentions.add(p.fond); if (p.trajet) intentions.add(p.trajet); for (const g of p.gestes || []) intentions.add(g); } }
   }
   ['parler', 'ecouter', 'oui', 'non', 'saluer', 'attendre', 'assis_parler'].forEach((i) => intentions.add(i));
-  const preMvt = mvt.precharger(intentions);
+  const preMvt = mvt ? mvt.precharger(intentions) : Promise.resolve();
   const animaux = await json('animaux/animaux.json');
   const betes = [];
   const especes = [...new Set(ctx.betes.map((b) => b[0]))];
@@ -313,9 +404,10 @@ export async function chargerVivants(ctx) {
   const habitants = [], vie = new Vie();
   await Promise.all(ctx.habitants.map(async (h) => {
     try {
-      const m = await hab.habiller(h.desc);
+      const m = h.meshy ? await habillerMeshy(h.meshy) : await hab.habiller(h.desc);
       h.objet.add(m.racine);
-      const H = new Habitant(m, mvt, h.act, hache(h.id));
+      const H = new Habitant(m, m.mvt || mvt, h.act, hache(h.id));
+      if (h.meshy) H.meshy = true;
       H.id = h.id; H.objet = h.objet;
       if (h.routine && h.routine.postes.length) {
         H.routine = { ...h.routine, i: 0, etat: 'poste', t: 2 + Math.random() * 6 };
