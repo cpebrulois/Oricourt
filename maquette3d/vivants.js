@@ -107,7 +107,12 @@ function accessoire(type, couleur) {
     m(new THREE.CylinderGeometry(0.014, 0.014, 0.36, 6), mat(0x6b4a2f), 0, 0.08, 0);
     m(new THREE.BoxGeometry(0.06, 0.06, 0.15), mat(0x6a6e72, { metalness: 0.6, roughness: 0.5 }), 0, 0.25, 0);
   } else if (type === 'panier') {
-    m(new THREE.CylinderGeometry(0.17, 0.12, 0.16, 12, 1, true), mat(0xa88a52, { side: THREE.DoubleSide }), 0, -0.12, 0.08);
+    // panier d'osier tenu par son anse : corps évasé, fond, bord tressé et anse en arceau
+    const osier = mat(0x9a7743, { side: THREE.DoubleSide });
+    m(new THREE.CylinderGeometry(0.17, 0.13, 0.15, 14, 1, true), osier, 0, -0.27, 0);
+    m(new THREE.CircleGeometry(0.13, 14), osier, 0, -0.345, 0, Math.PI / 2);
+    m(new THREE.TorusGeometry(0.17, 0.012, 5, 18), mat(0x7d5d33), 0, -0.195, 0, Math.PI / 2);
+    m(new THREE.TorusGeometry(0.16, 0.011, 5, 16, Math.PI), mat(0x7d5d33), 0, -0.195, 0);
   } else if (type === 'seau') {
     const bois = mat(0x7a5a38, { side: THREE.DoubleSide });
     m(new THREE.CylinderGeometry(0.13, 0.11, 0.24, 14, 1, true), bois, 0, -0.28, 0.02);
@@ -363,6 +368,59 @@ class MouvementsMeshy {
   }
 }
 
+// Outils en main des personnages Meshy. La prise se calcule sur le squelette (os de la main et premières phalanges) :
+// l'outil passe en travers du poing (de l'auriculaire vers l'index), au creux de la main. « pendant » : l'objet reste
+// d'aplomb (seau, panier, livre, lance tenue droite) ; sinon il suit la main (marteau). `quand` : clips où il est montré.
+const OUTILS_MESHY = {
+  forgeron: [{ objet: 'marteau', main: 'Right' }],
+  girard: [{ objet: 'marteau', main: 'Right' }],
+  sergent: [{ objet: 'lance', main: 'Right', pendant: true, bas: -0.08 }],
+  huguenin: [{ objet: 'lance', main: 'Right', pendant: true, bas: -0.08 }],
+  perrin: [{ objet: 'lance', main: 'Right', pendant: true, bas: -0.08 }],
+  porteuse: [{ objet: 'seau', main: 'Right', pendant: true }],
+  mahaut: [{ objet: 'seau', main: 'Right', pendant: true, quand: ['Carry_Water_Bucket_Walk'] }],
+  guillemette: [{ objet: 'seau', main: 'Right', pendant: true, quand: ['Carry_Water_Bucket_Walk'] }],
+  jehanne: [{ objet: 'panier', main: 'Left', pendant: true }],
+  colin: [{ objet: 'panier', main: 'Left', pendant: true }],
+  jardinier: [{ objet: 'panier', main: 'Left', pendant: true }],
+  etienne: [{ objet: 'livre', main: 'Left', pendant: true }],
+};
+const _q = new THREE.Quaternion(), _qp = new THREE.Quaternion(), _v = new THREE.Vector3(), _s = new THREE.Vector3();
+
+function outillerMeshy(m, id) {
+  const liste = [];
+  for (const o of OUTILS_MESHY[id] || []) {
+    const main = m.os.get(o.main + 'Hand'), mil = m.os.get(o.main + 'HandMiddle1'), idx = m.os.get(o.main + 'HandIndex1'), aur = m.os.get(o.main + 'HandPinky1');
+    if (!main) continue;
+    // squelette sans phalanges (certains rigs Meshy) : l'os de la main pointe vers les doigts (axe Y), paume de 9 cm
+    const bout = mil ? mil.position.clone() : new THREE.Vector3(0, 0.09, 0);
+    const doigts = bout.clone().normalize();
+    const travers = idx && aur ? idx.position.clone().sub(aur.position) : new THREE.Vector3(1, 0, 0);
+    travers.addScaledVector(doigts, -travers.dot(doigts)).normalize();      // de l'auriculaire vers l'index, ⟂ aux doigts
+    const support = new THREE.Group();
+    support.position.copy(bout).multiplyScalar(0.55);                       // creux du poing
+    const objet = o.objet === 'livre' ? (() => { const g = new THREE.Group(), k = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.23, 0.045),
+      new THREE.MeshStandardMaterial({ color: 0x8a4f2c, roughness: 0.8 })); k.position.y = -0.1; k.castShadow = true; g.add(k); return g; })() : accessoire(o.objet);
+    if (o.bas) objet.position.y = -o.bas;                                    // lance tenue au tiers
+    if (!o.pendant) support.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), travers);   // l'axe de l'outil traverse le poing
+    support.add(objet); main.add(support);
+    liste.push({ ...o, support, main });
+  }
+  return liste;
+}
+/** À chaque image, après les animations : visibilité selon le clip, et objets pendants remis d'aplomb (seul le cap suit le corps). */
+function majOutils(H) {
+  const clip = H.fond ? H.fond.getClip().name : '';
+  for (const o of H.outils) {
+    o.support.visible = !o.quand || o.quand.includes(clip);
+    if (!o.pendant || !o.support.visible) continue;
+    o.main.updateWorldMatrix(true, false);
+    o.main.matrixWorld.decompose(_v, _qp, _s);
+    _q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), H.objet.rotation.y);
+    o.support.quaternion.copy(_qp.invert().multiply(_q));
+  }
+}
+
 async function habillerMeshy(id) {
   const g = await glb('meshy/' + id + '.glb');
   const racine = g.scene, os = new Map(), maillages = [];
@@ -407,7 +465,7 @@ export async function chargerVivants(ctx) {
       const m = h.meshy ? await habillerMeshy(h.meshy) : await hab.habiller(h.desc);
       h.objet.add(m.racine);
       const H = new Habitant(m, m.mvt || mvt, h.act, hache(h.id));
-      if (h.meshy) H.meshy = true;
+      if (h.meshy) { H.meshy = true; H.outils = outillerMeshy(m, h.meshy); }
       H.id = h.id; H.objet = h.objet;
       if (h.routine && h.routine.postes.length) {
         H.routine = { ...h.routine, i: 0, etat: 'poste', t: 2 + Math.random() * 6 };
@@ -447,6 +505,7 @@ export async function chargerVivants(ctx) {
         H.maj(dt, parle, arret);
       }
       vie.apres(habitants.map((H) => H.porteur), dt);
+      for (const H of habitants) if (H.outils && H.outils.length) majOutils(H);
     },
     trouver(id) { return habitants.find((h) => h.id === id) || null; },
   };
