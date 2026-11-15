@@ -198,8 +198,10 @@ export const FIGURANTS = [
 ];
 
 // masures de torchis et de chaume : [x, y, angle en degrés, longueur, largeur]
+// (la masure qui était en [46, -46], adossée au flanc sud-est de la grange sud, fermait le passage vers le colombier :
+//  retirée le 15 novembre)
 export const MASURES = [
-  [46, -46, 20, 6.5, 4.2], [58, -40, -30, 6, 4], [30, -58, 70, 7, 4.2], [48, -62, 10, 5.5, 3.8], [16, -50, -15, 5, 3.6], [62, -56, 50, 6, 4],
+  [58, -40, -30, 6, 4], [30, -58, 70, 7, 4.2], [48, -62, 10, 5.5, 3.8], [16, -50, -15, 5, 3.6], [62, -56, 50, 6, 4],
 ];
 
 // ---- routines de métier (habitants animés du Studio) : postes de travail reliés par des trajets à pied.

@@ -364,12 +364,7 @@ const GAL = { B: [6.1, 5.6], A: [15.0, 0.3], prof: 3.4, ep: 0.6, ouv: 2.76, haut
   GAL.egout = () => { const b = data.batiments.find((q) => q.role === 'logis_rolin'), e = b.contour.map((p, k) => GAL.sur(p) ? b.egouts[k] : null).filter((v) => v != null).sort((x, y) => x - y); return e.length ? e[Math.floor(e.length / 2)] : GAL.zHaut + 2.3; };
   GAL.sur = (p) => { const u = (p[0] - GAL.B[0]) * GAL.t[0] + (p[1] - GAL.B[1]) * GAL.t[1], v = Math.abs((p[0] - GAL.B[0]) * GAL.n[0] + (p[1] - GAL.B[1]) * GAL.n[1]); return u > -0.3 && u < GAL.L + 0.3 && v < 0.35; }; }
 const passages = [];
-// Bâtiments d'aujourd'hui absents en 1435 : montrés seulement dans « Aujourd'hui », ni dessinés ni bloquants dans le passé
-// et dans le jeu. La grange sud (BD TOPO) est posée dans l'ouverture sud de l'enceinte : elle fermait le seul chemin
-// vers le colombier et son gardien.
-const ACTUEL_SEULEMENT = new Set(['grange_sud']);
 function construireBatiment(b) {
-  if (ACTUEL_SEULEMENT.has(b.role)) b = { ...b, groupe: 'village', materiaux: 'bassecour' };
   const groupe = b.groupe === 'village' ? G.actuel : (ROLES_TOUR.has(b.role) ? G.actuel : G.commun);
   if (b.ruine) {
     // tour ruinée : quatre murs épais au sommet déchiqueté (relevé LiDAR), comblement végétalisé à l'intérieur
@@ -518,14 +513,13 @@ function construireDeuxPans(b, groupe) {
     }
     s += L;
   }
-  const village = b.groupe === 'village' && b.materiaux !== 'bassecour';
-  const mm = maille(murs.geometrie(), village ? M.village : M.logis); groupe.add(mm); occultants.push(mm);
+  const mm = maille(murs.geometrie(), b.groupe === 'village' ? M.village : M.logis); groupe.add(mm); occultants.push(mm);
   const d = 0.45, pente = (S.zf - S.ze) / S.hw, zb = S.ze - d * pente, lp = Math.hypot(S.hw + d, S.zf - zb), toit = new Geo(), hl = S.hl + d;
   for (const sg of [-1, 1]) {
     const e0 = pt(-hl, sg * (S.hw + d)), e1 = pt(hl, sg * (S.hw + d)), f0 = pt(-hl, 0), f1 = pt(hl, 0);
     toit.quad(V(e0[0], e0[1], zb), V(e1[0], e1[1], zb), V(f1[0], f1[1], S.zf), V(f0[0], f0[1], S.zf), [0, 0], [2 * hl, 0], [2 * hl, lp], [0, lp], new THREE.Vector3(0, 1, 0));
   }
-  const mt = maille(toit.geometrie(), village ? M.tuilesVillage : M.tuiles); groupe.add(mt); occultants.push(mt);
+  const mt = maille(toit.geometrie(), b.groupe === 'village' ? M.tuilesVillage : M.tuiles); groupe.add(mt); occultants.push(mt);
   obstacles.push({ poly: R, village: b.groupe === 'village', role: b.role });
 }
 // --- le colombier : tour ronde relevée au LiDAR, visitable (intérieur restitué d'après le type « à pied » et la photo de la charpente)
