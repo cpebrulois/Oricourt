@@ -9,7 +9,7 @@ export const INTRO = {
     "Pendant la visite, tu t'es penché au-dessus de la margelle du vieux puits. Une brume froide est montée du fond, a rempli la galerie, puis toute la cour…",
     "Quand elle se dissipe, les murs ont retrouvé leurs créneaux, les tours leurs toits. Des poules courent dans la basse-cour. Nous sommes à l'automne de l'an 1435.",
     "Un brouillard étrange encercle le château : impossible de s'éloigner. Pour rentrer chez toi, il faut comprendre ce monde. Parle aux habitants : chacun te confiera un savoir et te posera une question. Gagne leurs neuf sceaux, puis reviens au puits.",
-    "Garde l'œil ouvert en chemin : le château a ses secrets, et le brouillard a pu égarer ici des choses qui n'ont rien à y faire. Écouter, explorer, examiner et bien répondre du premier coup te rapporte des points d'expérience : ton carnet tient les comptes.",
+    "Garde l'œil ouvert en chemin : le château a ses secrets, et le brouillard a pu égarer ici des choses qui n'ont rien à y faire. Écouter, explorer, examiner, regarder une œuvre d'art et bien répondre du premier coup te rapporte des points d'expérience : ton carnet tient les comptes. La barre d'espace te fait sauter.",
   ],
   bouton: "Entrer dans l'an 1435",
 };
@@ -309,7 +309,7 @@ export const EXPERTISES = [
     texte: "La faucille sert à moissonner les céréales, poignée par poignée. La faux, plus grande, sert surtout à couper l'herbe des prés pour faire le foin." },
 ];
 // Barème du tableau d'honneur
-export const BAREME = { sceau: 100, premierCoup: 50, ecoute: 10, tresor: 75, expertise: 40, lieu: 15 };
+export const BAREME = { sceau: 100, premierCoup: 50, ecoute: 10, tresor: 75, expertise: 40, lieu: 15, oeuvre: 60 };
 export const RANGS = [[0.9, "Maître chroniqueur d'Oricourt"], [0.7, 'Chevalier du savoir'], [0.5, 'Écuyer curieux'], [0.3, 'Page attentif'], [0, 'Voyageur égaré']];
 
 // ---- l'œuvre du chevalet de la chapelle : un petit cours (touche E près du chevalet)
@@ -317,6 +317,18 @@ export const OEUVRE = {
   titre: 'La Vierge du chancelier Rolin',
   image: 'tex/vierge_rolin.jpg',
   video: 'https://www.youtube.com/watch?v=fZVqgCwlQOM',
+  // question posée dans le jeu après la leçon (une seule réponse comptée)
+  quiz: {
+    question: 'Pourquoi peut-on dire que ce tableau est audacieux ?',
+    choix: [
+      'Parce que Nicolas Rolin, un homme, est peint à la même taille que la Vierge, dans la même pièce qu’elle.',
+      'Parce que Van Eyck a peint le tableau en une seule journée, sans aucune esquisse.',
+      'Parce que le paysage représente fidèlement la ville d’Oricourt vue du donjon.',
+    ],
+    juste: 0,
+    bravo: 'Exactement : le donateur s’installe face à la Vierge, à sa hauteur, comme dans un même salon. C’est très hardi en 1435.',
+    rate: 'Non : regarde mieux. Rolin, à genoux, a la même taille que la Vierge et se trouve dans la même pièce : c’est cela l’audace. La ville du fond est imaginée.',
+  },
   cartel: 'Jan van Eyck, vers 1435. Peinture à l’huile sur bois, 66 × 62 cm. Paris, musée du Louvre. Le tableau du chevalet est à sa vraie taille.',
   parties: [
     ['Qui est représenté ?', "À gauche, à genoux devant un livre de prières, Nicolas Rolin (vers 1376-1462). Chancelier du duc de Bourgogne Philippe le Bon pendant plus de trente ans, c’est l’homme le plus puissant de l’État bourguignon après le duc. C’est lui qui acquiert Oricourt en 1435, l’année même où l’on date le tableau. En 1443, avec sa femme Guigone de Salins, il fonde les Hospices de Beaune pour soigner les pauvres."],

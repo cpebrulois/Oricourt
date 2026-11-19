@@ -1073,15 +1073,15 @@ function pavillon(poly, z0, h, mat, groupe) {
   const m = maille(g, mat); groupe.add(m); occultants.push(m); return m;
 }
 /** Escalier en vis autour d'un noyau : marches de pierre + surface praticable. */
-function vis(c, ri, ro, z0, z1, a0, groupe, sens = 1) {
-  const pas = 2.6, nTour = 16, h = pas / nTour, n = Math.ceil((z1 - z0) / h), geos = [];
+function vis(c, ri, ro, z0, z1, a0, groupe, sens = 1, pas = 2.6, nTour = 16) {
+  const h = pas / nTour, n = Math.ceil((z1 - z0) / h), geos = [];
   for (let i = 0; i < n; i++) {
     const th = a0 + sens * (i + 0.5) * 2 * Math.PI / nTour, zt = Math.min(z1, z0 + (i + 1) * h), rm = (ri + ro) / 2;
     const gm = new THREE.BoxGeometry(ro - ri, 0.2, (2 * Math.PI * ro / nTour) * 1.05);
     gm.applyMatrix4(new THREE.Matrix4().makeRotationY(th)); gm.translate(c[0] + Math.cos(th) * rm, zt - 0.1, -(c[1] + Math.sin(th) * rm));
     geos.push(gm);
   }
-  const noyau = new THREE.CylinderGeometry(ri, ri, z1 - z0 + 2.6, 10); noyau.translate(c[0], (z0 + z1) / 2 + 1.3, -c[1]); geos.push(noyau);
+  const noyau = new THREE.CylinderGeometry(ri, ri, z1 - z0 + 2.2, 10); noyau.translate(c[0], (z0 + z1) / 2 + 1.1, -c[1]); geos.push(noyau);
   groupe.add(maille(uvMonde(mergeGeometries(geos.map((g) => (g.index ? g.toNonIndexed() : g)))), M.marches));
   ETAGES.push({ type: 'vis', c, ri: ri + 0.12, ro: ro - 0.12, z0, z1, pas, a0, sens });
 }
@@ -1091,7 +1091,7 @@ function echelle(a, b, z0, z1, larg, groupe) {
   for (const sg of [-1, 1]) {
     const lim = new THREE.BoxGeometry(0.07, 0.24, Math.hypot(L, z1 - z0) + 0.2);
     lim.applyMatrix4(new THREE.Matrix4().makeRotationX(-Math.atan2(z1 - z0, L)));
-    lim.applyMatrix4(new THREE.Matrix4().makeRotationY(Math.atan2(t[0], -t[1]) + Math.PI));
+    lim.applyMatrix4(new THREE.Matrix4().makeRotationY(Math.atan2(t[0], -t[1])));
     lim.translate((a[0] + b[0]) / 2 + nrm[0] * sg * larg / 2, (z0 + z1) / 2, -((a[1] + b[1]) / 2 + nrm[1] * sg * larg / 2)); geos.push(lim);
   }
   for (let i = 1; i <= nMarches; i++) {
@@ -1150,29 +1150,43 @@ function tourCreuse(cfg) {
     for (let i = 0; i < 3; i++) { const Ri = rectExpanse(R, 0.17 * (i + 1)); prismeRect(Ri, zEnc + i * 0.18, zEnc + (i + 1) * 0.18 + 0.01, M.tour, grp); }
   }
   // planchers, salles et passages
-  const iSalle = rectExpanse(inter, -0.3);
+  const iSalle = rectExpanse(inter, -0.4);
   if (zSol != null) {
     dalle(inter, zSol, 0.3, M.courtine, grp); planchers.push({ poly: inter, z: zSol, medieval: true });
     const k = cfg.porteSol, L = axe2(R[k], R[(k + 1) % 4]).L;
-    passages.push({ role: b.role, medieval: true, poly: [surCote(R, k, L / 2 - 0.45, -1.0), surCote(R, k, L / 2 + 0.45, -1.0), surCote(R, k, L / 2 + 0.45, ep + 0.6), surCote(R, k, L / 2 - 0.45, ep + 0.6)] });
-    passages.push({ role: b.role, medieval: true, poly: iSalle });
+    passages.push({ role: b.role, medieval: true, poly: [surCote(R, k, L / 2 - 0.45, -1.0), surCote(R, k, L / 2 + 0.45, -1.0), surCote(R, k, L / 2 + 0.45, ep + 0.9), surCote(R, k, L / 2 - 0.45, ep + 0.9)] });
+    if (!cfg.visPleine) passages.push({ role: b.role, medieval: true, poly: iSalle });
   }
-  const ouvertureVis = cfg.vis ? [[cfg.vis.c[0] - 1.35, cfg.vis.c[1] - 1.35], [cfg.vis.c[0] + 1.35, cfg.vis.c[1] - 1.35], [cfg.vis.c[0] + 1.35, cfg.vis.c[1] + 1.35], [cfg.vis.c[0] - 1.35, cfg.vis.c[1] + 1.35]] : null;
+  // escalier en vis occupant toute la largeur de la tour : il part à côté de la porte du sol, tourne dans le sens des
+  // aiguilles d'une montre et débouche dans la salle par une trémie (200°) ; le palier garde les deux portes des courtines
+  let ouvertureVis = null, tremie = null, visP = null;
+  if (cfg.visPleine) {
+    const c = centre4(inter), hx = axe2(inter[0], inter[1]).L / 2, hy = axe2(inter[1], inter[2]).L / 2, ro = Math.min(hx, hy) - 0.06;
+    const k = cfg.porteSol, L = axe2(R[k], R[(k + 1) % 4]).L, pd = surCote(R, k, L / 2, 0), phiD = Math.atan2(pd[1] - c[1], pd[0] - c[0]);
+    // la première marche est juste à côté de la porte (30° plus loin), la dernière débouche à 80° de part et d'autre :
+    // nombre de tours = N + 310/360, et le pas reste d'au moins 3,6 m par tour pour garder 2 m de hauteur sous la trémie
+    const H = cfg.salle - zSol, N = Math.max(1, Math.floor(H / 3.6 - 310 / 360)), tours2 = N + 310 / 360, pas = H / tours2;
+    const phiFin = phiD + 80 * DEG, a0 = phiFin + tours2 * 2 * Math.PI;
+    const secteur = (r) => { const out = [c]; for (let i = 0; i <= 20; i++) { const w = phiFin + 200 * DEG * i / 20; out.push([c[0] + Math.cos(w) * r, c[1] + Math.sin(w) * r]); } return out; };
+    ouvertureVis = secteur(ro); tremie = secteur(ro + 0.15);
+    visP = { c, ro, a0, pas };
+  }
   const trappe = cfg.echelle ? (() => { const { a, b: bb } = cfg.echelle, t = axe2(a, bb).t, n = [-t[1], t[0]], e = 0.55; return [[bb[0] - t[0] * 1.2 + n[0] * e, bb[1] - t[1] * 1.2 + n[1] * e], [bb[0] + t[0] * 0.25 + n[0] * e, bb[1] + t[1] * 0.25 + n[1] * e], [bb[0] + t[0] * 0.25 - n[0] * e, bb[1] + t[1] * 0.25 - n[1] * e], [bb[0] - t[0] * 1.2 - n[0] * e, bb[1] - t[1] * 1.2 - n[1] * e]]; })() : null;
+  // le pied de l'échelle de meunier n'est pas dans le plancher de la salle (sinon on y resterait)
+  const piedEchelle = cfg.echelle ? (() => { const { a, b: bb } = cfg.echelle, t = axe2(a, bb).t, n = [-t[1], t[0]], e = 0.5; return [[a[0] + t[0] * 0.15 + n[0] * e, a[1] + t[1] * 0.15 + n[1] * e], [bb[0] + t[0] * 0.3 + n[0] * e, bb[1] + t[1] * 0.3 + n[1] * e], [bb[0] + t[0] * 0.3 - n[0] * e, bb[1] + t[1] * 0.3 - n[1] * e], [a[0] + t[0] * 0.15 - n[0] * e, a[1] + t[1] * 0.15 - n[1] * e]]; })() : null;
   dalle(inter, cfg.salle, 0.35, M.bois, grp, ouvertureVis ? [ouvertureVis] : []);
-  ETAGES.push({ type: 'plan', poly: iSalle, z: cfg.salle });
-  for (const P of portes) {   // seuils : du chemin de ronde à la salle, à travers le mur
-    const L = axe2(R[P.k], R[(P.k + 1) % 4]).L;
-    ETAGES.push({ type: 'plan', z: cfg.salle, poly: [surCote(R, P.k, P.u - 0.5, -1.2), surCote(R, P.k, P.u + 0.5, -1.2), surCote(R, P.k, P.u + 0.5, ep + 0.5), surCote(R, P.k, P.u - 0.5, ep + 0.5)] });
+  ETAGES.push({ type: 'plan', poly: iSalle, z: cfg.salle, trous: [tremie, piedEchelle].filter(Boolean) });
+  for (const P of portes) {   // seuils : du chemin de ronde à la salle, à travers le mur (jusqu'au nu intérieur)
+    ETAGES.push({ type: 'plan', z: cfg.salle, poly: [surCote(R, P.k, P.u - 0.45, -1.2), surCote(R, P.k, P.u + 0.45, -1.2), surCote(R, P.k, P.u + 0.45, ep + 0.45), surCote(R, P.k, P.u - 0.45, ep + 0.45)], trous: [tremie].filter(Boolean) });
   }
   lumiere(...centre4(inter), cfg.salle + 2.3, 6, 7);
   { const k = cfg.porteSol != null ? (cfg.porteSol + 1) % 4 : 1, L = axe2(R[k], R[(k + 1) % 4]).L, q = surCote(R, k, L / 2, ep + 0.02), ci = centre4(inter), dq = Math.hypot(ci[0] - q[0], ci[1] - q[1]);
     torche(q[0], q[1], cfg.salle + 1.5, [(ci[0] - q[0]) / dq, (ci[1] - q[1]) / dq]); }
-  if (cfg.vis) vis(cfg.vis.c, 0.22, cfg.vis.r, zSol, cfg.salle, cfg.vis.a0, grp);
+  if (visP) vis(visP.c, 0.24, visP.ro, zSol, cfg.salle, visP.a0, grp, -1, visP.pas, 18);
   if (cfg.echelle) { echelle(cfg.echelle.a, cfg.echelle.b, cfg.salle, cfg.echelle.z1, 0.8, grp); }
   dalle(inter, cfg.plafond || cfg.salle + 3.4, 0.35, M.bois, grp, trappe ? [trappe] : []);
   if (!cfg.plafond) dalle(inter, cfg.zH, 0.3, M.bois, grp);   // plancher des hourds
-  SALLES_TOURS.push({ R: rectExpanse(R, 2.2), z: cfg.salle, role: b.role, centre: centre4(inter) });
+  SALLES_TOURS.push({ R: rectExpanse(R, 2.2), z: cfg.salle, role: b.role, centre: centre4(inter), vis: visP, echelle: cfg.echelle || null, zSol, porte: zSol != null ? surCote(R, cfg.porteSol, axe2(R[cfg.porteSol], R[(cfg.porteSol + 1) % 4]).L / 2, -1.5) : null });
   obstacles.push({ poly: R, village: false, role: b.role, medievalSeulement: true });
   return { inter, zSol };
 }
@@ -1186,20 +1200,19 @@ if (tours.tour_maitresse) {   // entrée perchée : on n'y entre que par les che
 }
 if (tours.tour_ouest) {
   const b = tours.tour_ouest, R = b.rect, zH = 21.5, inter = rectExpanse(R, -1.9);
-  // vis dans l'angle nord-ouest de la salle ; porte au sol côté haute-cour (est)
-  const ci = centre4(inter), coin = inter.reduce((m, p) => (p[0] - p[1] < m[0] - m[1] ? p : m)), dc = Math.hypot(ci[0] - coin[0], ci[1] - coin[1]);
-  const c = [coin[0] + (ci[0] - coin[0]) / dc * 1.35 * Math.SQRT2, coin[1] + (ci[1] - coin[1]) / dc * 1.35 * Math.SQRT2];   // angle nord-ouest
+  // escalier en vis sur toute la largeur ; porte au sol côté haute-cour (est)
   const kEst = [0, 1, 2, 3].sort((i, j) => { const d = (k) => { const m = [(R[k][0] + R[(k + 1) % 4][0]) / 2, (R[k][1] + R[(k + 1) % 4][1]) / 2]; return Math.hypot(m[0] - CENTRE_HC[0], m[1] - CENTRE_HC[1]); }; return d(i) - d(j); })[0];
-  tourCreuse({ b, ep: 1.9, zH, salle: 10.8, murs: ['mur_3', 'mur_8'], porteSol: kEst, vis: { c, r: 1.25, a0: 0 } });
+  tourCreuse({ b, ep: 1.9, zH, salle: 10.8, murs: ['mur_3', 'mur_8'], porteSol: kEst, visPleine: true });
   const ext = hourds(R, zH, 1.1, G.medieval);
   pavillon(decaler(ext, 0.3), zH + 2.3, 5.2, M.tuiles, G.medieval);
 }
 if (tours.tourelle_sud_ouest) {   // encorbellement en pierre au raccord des maçonneries, terrasse crénelée
   const b = tours.tourelle_sud_ouest, R = b.rect, zH = 14.8, zT = 13.7, inter = rectExpanse(R, -0.9);
-  const ci = centre4(inter), a = [ci[0] - 0.55, ci[1] - 0.95], bb = [ci[0] - 0.55, ci[1] + 0.65];
+  const ci = centre4(inter), a = [ci[0] - 0.5, ci[1] - 1.1], bb = [ci[0] - 0.5, ci[1] + 0.95];
   tourCreuse({ b, ep: 0.9, zH, salle: 11.45, murs: ['mur_3', 'mur_4'], porteSol: null, encorbellement: 7.6, echelle: { a, b: bb, z1: zT }, plafond: zT });
   const haut = rectExpanse(R, 0.5);
-  ETAGES.push({ type: 'plan', poly: rectExpanse(inter, -0.25), z: zT });
+  { const t = axe2(a, bb).t, n = [-t[1], t[0]], e = 0.55, tr = [[bb[0] - t[0] * 1.2 + n[0] * e, bb[1] - t[1] * 1.2 + n[1] * e], [bb[0] + t[0] * 0.2 + n[0] * e, bb[1] + t[1] * 0.2 + n[1] * e], [bb[0] + t[0] * 0.2 - n[0] * e, bb[1] + t[1] * 0.2 - n[1] * e], [bb[0] - t[0] * 1.2 - n[0] * e, bb[1] - t[1] * 1.2 - n[1] * e]];
+    ETAGES.push({ type: 'plan', poly: rectExpanse(inter, -0.35), z: zT, trous: [tr] }); }   // la trappe n'est pas du plancher : on y redescend par l'échelle
   for (let k = 0; k < 4; k++) {   // merlons de la terrasse, sur le parapet
     const p = haut[k], q = haut[(k + 1) % 4], ang = Math.atan2(q[1] - p[1], q[0] - p[0]), cc = centre4(haut);
     for (let t = 0.14; t < 0.95; t += 0.24) { const x = lerp(p[0], q[0], t), y = lerp(p[1], q[1], t), L = Math.hypot(cc[0] - x, cc[1] - y); merlonsMed.push({ x: x + (cc[0] - x) / L * 0.32, y: y + (cc[1] - y) / L * 0.32, z: zH + 0.7, ang, sx: 0.6 }); }
@@ -1216,13 +1229,13 @@ if (tours.tourelle_sud_ouest) {   // encorbellement en pierre au raccord des ma�
       const a = pts[Math.max(0, k - 1)], c = pts[Math.min(n - 1, k + 1)], { t } = axe2([a.x, a.y], [c.x, c.y]);
       let nx = -t[1], ny = t[0]; if ((p.x - CENTRE_HC[0]) * nx + (p.y - CENTRE_HC[1]) * ny < 0) { nx = -nx; ny = -ny; }
       ext.push({ ...p, x: p.x + nx * (w.epaisseur / 2 - 0.25), y: p.y + ny * (w.epaisseur / 2 - 0.25) });
-      int.push({ x: p.x - nx * 0.25, y: p.y - ny * 0.25, z: hautFn(p) });
+      int.push({ x: p.x - nx * 0.325, y: p.y - ny * 0.325, z: hautFn(p) });   // milieu de la partie libre, entre parapet et bord côté cour
     });
     ruban(ext, 0.5, (p) => hautFn(p) + 1.0, geo, 0.2);
     // prolongement de la surface jusque dans les salles des tours (1,8 m au-delà des bouts)
     const prol = (A, B) => { const { t } = axe2([B.x, B.y], [A.x, A.y]), q = { x: A.x + t[0] * 1.8, y: A.y + t[1] * 1.8, z: A.z }, S = SALLES_TOURS.find((T) => dedansPoly(q.x, q.y, T.R)); if (S) q.z = S.z; return q; };
     RD.int = int.map((q, k) => ({ ...q, s: pts[k].s })); RD.debut = prol(int[0], int[1]); RD.fin = prol(int[n - 1], int[n - 2]);
-    ETAGES.push({ type: 'ruban', demi: w.epaisseur / 2 - 0.4, pts: [RD.debut, ...int, RD.fin] });
+    ETAGES.push({ type: 'ruban', demi: Math.max(0.3, (w.epaisseur - 0.95) / 2), pts: [RD.debut, ...int, RD.fin] });
   }
   const m = maille(geo.geometrie(), M.courtine); G.medieval.add(m); occultants.push(m);
 }
@@ -1313,7 +1326,7 @@ const CHAPELLE = {};
   const pose = (geo, mat, s2, d, z, ombre = true) => { const m = maille(geo, mat, ombre); const p = P(s2, d); m.position.copy(V(p[0], p[1], z)); m.rotation.y = Math.atan2(t[0], -t[1]) + Math.PI / 2; gc.add(m); return m; };
   const dm = (d0 + d1) / 2;
   pose(new THREE.BoxGeometry(1.7, 0.16, 3.6), M.courtine, s1 - 0.85, dm, zc + 0.08);
-  pose(new THREE.BoxGeometry(0.9, 1.0, 1.9), M.tour, s1 - 0.55, dm, zc + 0.16 + 0.5);
+  pose(uvMonde(new THREE.BoxGeometry(0.9, 1.0, 1.9)), new THREE.MeshStandardMaterial({ map: moA, normalMap: moN, color: 0xe6dccb, roughness: 0.9 }), s1 - 0.55, dm, zc + 0.16 + 0.5);   // autel de pierre
   pose(new THREE.BoxGeometry(0.95, 0.02, 2.0), new THREE.MeshStandardMaterial({ color: 0xf6f2e8, roughness: 0.8 }), s1 - 0.55, dm, zc + 1.17);
   const or = new THREE.MeshStandardMaterial({ color: 0xc9a043, metalness: 0.8, roughness: 0.3 });
   pose(new THREE.BoxGeometry(0.04, 0.55, 0.04), or, s1 - 0.4, dm, zc + 1.45); pose(new THREE.BoxGeometry(0.04, 0.04, 0.3), or, s1 - 0.4, dm, zc + 1.58);
@@ -1327,9 +1340,39 @@ const CHAPELLE = {};
     const etoffe = (fond, galon) => toile((x, w, h) => { x.fillStyle = fond; x.fillRect(0, 0, w, h); x.fillStyle = galon; x.fillRect(0, 6, w, 8); x.fillRect(0, h - 14, w, 8); x.fillRect(w / 2 - 4, 14, 8, h - 28);
       for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { x.beginPath(); x.arc(14 + i * 33, 30 + j * 26, 3, 0, 7); x.fill(); } });
     const plan = (w, h, tx, s2, d, z, faceS) => { const m = pose(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.85, side: THREE.DoubleSide }), s2, d, z, false); return m; };
-    // parement (devant d'autel) rouge à galons d'or, dossal vert derrière l'autel
-    { const m = pose(new THREE.BoxGeometry(0.015, 0.9, 1.86), new THREE.MeshStandardMaterial({ map: etoffe('#7a1f1c', '#c9a043'), roughness: 0.8 }), s1 - 1.012, dm, zc + 0.16 + 0.47, false); m.material.map.rotation = 0; }
-    pose(new THREE.BoxGeometry(0.02, 1.25, 2.0), new THREE.MeshStandardMaterial({ map: etoffe('#2f4a35', '#b8963e'), roughness: 0.85 }), s1 - 0.02, dm, zc + 1.95, false);
+    // parement (devant d'autel) de velours rouge brodé d'or : arcatures, monogramme du Christ, frange ;
+    // dossal de soie verte au motif de grenades (dessin courant des étoffes du XVe siècle)
+    const parement = toile((x, w, h) => {
+      const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#8a2420'); g.addColorStop(1, '#5e1512'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+      for (let k = 0; k < 2500; k++) { x.fillStyle = `rgba(${40 + Math.random() * 40 | 0},0,0,0.08)`; x.fillRect(Math.random() * w, Math.random() * h, 1, 3); }   // poil du velours
+      const or = (a) => `rgba(214,170,74,${a})`; x.strokeStyle = or(0.95); x.fillStyle = or(0.95);
+      x.lineWidth = 6; x.strokeRect(6, 6, w - 12, h - 30);
+      for (let i = 0; i < 5; i++) {   // arcatures gothiques
+        const cx = 34 + i * 97, l = 34; x.lineWidth = 3; x.beginPath(); x.moveTo(cx - l, h - 34); x.lineTo(cx - l, 70); x.quadraticCurveTo(cx - l, 30, cx, 22); x.quadraticCurveTo(cx + l, 30, cx + l, 70); x.lineTo(cx + l, h - 34); x.stroke();
+        if (i !== 2) { x.beginPath(); x.moveTo(cx, 60); for (let q = 0; q < 6; q++) { const an = q * Math.PI / 3; x.lineTo(cx + Math.cos(an) * 14, 90 + Math.sin(an) * 14); } x.stroke(); x.beginPath(); x.arc(cx, 90, 5, 0, 7); x.fill();
+          for (const yy of [140, 175, 205]) { x.beginPath(); x.arc(cx, yy, 4, 0, 7); x.fill(); } }
+      }
+      x.beginPath(); x.arc(w / 2, 115, 46, 0, 7); x.lineWidth = 4; x.stroke();   // médaillon central : IHS
+      x.font = 'bold 40px Georgia, serif'; x.textAlign = 'center'; x.fillText('IHS', w / 2, 130);
+      for (let fx = 4; fx < w; fx += 6) { x.fillStyle = or(0.9 - (fx % 12 ? 0.2 : 0)); x.fillRect(fx, h - 24, 3, 20); }   // frange
+    }, 512, 256);
+    const dossal = toile((x, w, h) => {
+      x.fillStyle = '#25412f'; x.fillRect(0, 0, w, h);
+      for (let j = 0; j < 3; j++) for (let i = 0; i < 4; i++) {
+        const cx = 32 + i * 64 + (j % 2) * 32, cy = 40 + j * 80;
+        x.strokeStyle = 'rgba(205,165,80,0.9)'; x.lineWidth = 2.5; x.beginPath(); x.ellipse(cx, cy, 22, 30, 0, 0, 7); x.stroke();
+        x.fillStyle = 'rgba(205,165,80,0.85)'; x.beginPath(); x.moveTo(cx, cy - 18); x.bezierCurveTo(cx + 15, cy - 10, cx + 13, cy + 16, cx, cy + 18); x.bezierCurveTo(cx - 13, cy + 16, cx - 15, cy - 10, cx, cy - 18); x.fill();
+        x.fillStyle = '#7a2a24'; for (let q = 0; q < 5; q++) { x.beginPath(); x.arc(cx - 6 + (q % 3) * 6, cy - 2 + Math.floor(q / 3) * 8, 2.5, 0, 7); x.fill(); }   // grains de la grenade
+      }
+      x.fillStyle = 'rgba(205,165,80,0.95)'; x.fillRect(0, 0, w, 8); x.fillRect(0, h - 8, w, 8);
+    }, 256, 256);
+    pose(new THREE.BoxGeometry(0.015, 0.9, 1.86), new THREE.MeshStandardMaterial({ map: parement, roughness: 0.75 }), s1 - 1.012, dm, zc + 0.16 + 0.47, false);
+    { const m = pose(new THREE.BoxGeometry(0.02, 1.25, 2.0), new THREE.MeshStandardMaterial({ map: dossal, roughness: 0.6, metalness: 0.05 }), s1 - 0.02, dm, zc + 1.95, false); }
+    // nappe de lin qui retombe sur les côtés, chandeliers de laiton
+    const lin = new THREE.MeshStandardMaterial({ color: 0xf4efe2, roughness: 0.85 });
+    for (const sd of [-1, 1]) pose(new THREE.BoxGeometry(0.95, 0.5, 0.012), lin, s1 - 0.55, dm + sd * 1.0, zc + 0.95, false);
+    const laiton = new THREE.MeshStandardMaterial({ color: 0xb99a4a, metalness: 0.85, roughness: 0.32 });
+    for (const dd of [-0.7, 0.7]) { pose(new THREE.CylinderGeometry(0.03, 0.09, 0.08, 12), laiton, s1 - 0.5, dm + dd, zc + 1.21); pose(new THREE.CylinderGeometry(0.018, 0.018, 0.12, 8), laiton, s1 - 0.5, dm + dd, zc + 1.29); }
     // grande croix de bois peint, au-dessus du dossal
     const bois = new THREE.MeshStandardMaterial({ map: M.bois.map, color: 0x6a4a30, roughness: 0.8 });
     pose(new THREE.BoxGeometry(0.1, 2.5, 0.16), bois, s1 - 0.09, dm, zc + 3.15);
@@ -1349,26 +1392,54 @@ const CHAPELLE = {};
     pose(new THREE.CylinderGeometry(0.07, 0.1, 0.8, 10), pierre, s0 + 0.35, 3.3, zc + 0.4);
     pose(new THREE.CylinderGeometry(0.22, 0.12, 0.16, 14), pierre, s0 + 0.35, 3.3, zc + 0.86);
     pose(new THREE.CircleGeometry(0.18, 14).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x8d9ea6, roughness: 0.1, metalness: 0.2 }), s0 + 0.35, 3.3, zc + 0.93, false);
-    // ex-voto : petits panneaux peints offerts en remerciement d'une grâce (malade guéri, voyageur sauvé), cœurs de cire
-    const SCENES = [['#4b6b8a', 'lit'], ['#7a6a4a', 'chemin'], ['#5a7a5a', 'enfant'], ['#8a5a4a', 'lit']];
-    SCENES.forEach(([fond, sc], i) => {
+    // ex-voto : on remercie la Vierge d'une grâce reçue (guérison, accident évité). Au XVe siècle, les plus courants sont de
+    // cire, en forme de la partie du corps guérie, suspendus près de l'autel ; quelques petits tableaux peints sur bois.
+    const SCENES = ['lit', 'cheval', 'puits', 'incendie'];
+    SCENES.forEach((sc, i) => {
       const tx = toile((x, w, h) => {
-        x.fillStyle = '#d8c79a'; x.fillRect(0, 0, w, h); x.fillStyle = fond; x.fillRect(8, 8, w - 16, h - 34);
-        x.fillStyle = '#f1e7c6'; x.beginPath(); x.ellipse(w - 32, 28, 18, 13, 0, 0, 7); x.fill();                         // nuée
-        x.fillStyle = '#2e4f8f'; x.beginPath(); x.moveTo(w - 32, 20); x.lineTo(w - 24, 40); x.lineTo(w - 40, 40); x.fill();   // la Vierge en manteau bleu
-        x.fillStyle = '#e8c9a0'; x.beginPath(); x.arc(w - 32, 18, 4, 0, 7); x.fill(); x.strokeStyle = '#d4a93a'; x.lineWidth = 2; x.beginPath(); x.arc(w - 32, 18, 6.5, 0, 7); x.stroke();
-        x.fillStyle = '#5a3a28';
-        if (sc === 'lit') { x.fillRect(16, 66, 56, 14); x.fillStyle = '#efe6d0'; x.fillRect(18, 60, 50, 8); x.fillStyle = '#e8c9a0'; x.beginPath(); x.arc(22, 60, 5, 0, 7); x.fill(); }
-        else if (sc === 'chemin') { x.fillStyle = '#c8b27a'; x.fillRect(8, 74, w - 16, 20); x.fillStyle = '#4a3020'; x.beginPath(); x.arc(40, 80, 9, 0, 7); x.fill(); x.fillRect(28, 66, 30, 8); }
-        else { x.fillStyle = '#9a3a2a'; x.fillRect(30, 56, 12, 22); x.fillStyle = '#e8c9a0'; x.beginPath(); x.arc(36, 52, 5, 0, 7); x.fill(); }
-        x.fillStyle = '#7a2a20'; x.fillRect(70, 62, 10, 20); x.fillStyle = '#e8c9a0'; x.beginPath(); x.arc(75, 58, 4.5, 0, 7); x.fill();   // le donateur à genoux
-        x.fillStyle = '#3a2a1a'; x.font = 'bold 13px serif'; x.textAlign = 'center'; x.fillText('EX VOTO', w / 2, h - 16); x.font = '10px serif'; x.fillText(['M CCCC XXX', 'M CCCC XXIX', 'M CCCC XXXII', 'M CCCC XXXIIII'][i], w / 2, h - 5);
-      });
-      plan(0.3, 0.3, tx, 1.7 + i * 0.42, d1 - 0.015, zc + 1.75 + (i % 2) * 0.38, false);
+        // panneau de bois au cadre peint, ciel, sol, la Vierge dans une nuée dorée, le donateur à genoux, la scène, cartouche
+        x.fillStyle = ['#8a3a22', '#2f4f6a', '#6a5a2a', '#4a3a5a'][i]; x.fillRect(0, 0, w, h);
+        const ciel = x.createLinearGradient(0, 14, 0, h * 0.6); ciel.addColorStop(0, '#6f8fb0'); ciel.addColorStop(1, '#e8dcb8'); x.fillStyle = ciel; x.fillRect(14, 14, w - 28, h - 80);
+        x.fillStyle = ['#7d8a52', '#8a7a52', '#6f8a52', '#8a6a4a'][i]; x.fillRect(14, h * 0.55, w - 28, h - 66 - h * 0.55 + 14);
+        const g = x.createRadialGradient(w - 64, 58, 4, w - 64, 58, 52); g.addColorStop(0, 'rgba(255,235,160,1)'); g.addColorStop(1, 'rgba(255,235,160,0)'); x.fillStyle = g; x.fillRect(w - 130, 0, 130, 120);
+        x.strokeStyle = 'rgba(220,180,80,0.8)'; x.lineWidth = 1.5; for (let q = 0; q < 16; q++) { const an = q * Math.PI / 8; x.beginPath(); x.moveTo(w - 64 + Math.cos(an) * 30, 58 + Math.sin(an) * 30); x.lineTo(w - 64 + Math.cos(an) * 46, 58 + Math.sin(an) * 46); x.stroke(); }
+        x.fillStyle = '#f4ecd8'; for (const [ox, oy, r] of [[-26, 80, 16], [0, 86, 18], [24, 80, 15]]) { x.beginPath(); x.arc(w - 64 + ox, oy, r, 0, 7); x.fill(); }
+        x.fillStyle = '#28468f'; x.beginPath(); x.moveTo(w - 64, 38); x.quadraticCurveTo(w - 44, 60, w - 46, 82); x.lineTo(w - 82, 82); x.quadraticCurveTo(w - 84, 60, w - 64, 38); x.fill();   // manteau bleu
+        x.fillStyle = '#b8323a'; x.fillRect(w - 70, 52, 12, 26);
+        x.fillStyle = '#ecc9a2'; x.beginPath(); x.arc(w - 64, 36, 7, 0, 7); x.fill(); x.strokeStyle = '#e0b040'; x.lineWidth = 2.5; x.beginPath(); x.arc(w - 64, 34, 11, 0, 7); x.stroke();
+        const gens = (px, py, coul, couche) => { x.fillStyle = coul; if (couche) { x.fillRect(px, py, 34, 9); x.fillStyle = '#ecc9a2'; x.beginPath(); x.arc(px - 3, py + 3, 5, 0, 7); x.fill(); } else { x.fillRect(px - 6, py - 22, 12, 24); x.fillStyle = '#ecc9a2'; x.beginPath(); x.arc(px, py - 27, 5, 0, 7); x.fill(); } };
+        if (sc === 'lit') { x.fillStyle = '#5a3a24'; x.fillRect(26, 150, 90, 30); x.fillStyle = '#f2ecdc'; x.fillRect(28, 140, 86, 14); gens(40, 136, '#c8c0b0', true); x.fillStyle = '#7a2a1c'; x.fillRect(26, 108, 8, 72); x.fillRect(110, 108, 8, 72); x.fillRect(26, 104, 92, 8); }
+        else if (sc === 'cheval') { x.fillStyle = '#6a4a30'; x.beginPath(); x.ellipse(70, 160, 34, 14, -0.4, 0, 7); x.fill(); x.fillRect(90, 128, 10, 22); x.beginPath(); x.ellipse(98, 124, 12, 7, -0.6, 0, 7); x.fill(); for (const lx of [48, 60, 80, 92]) x.fillRect(lx, 168, 4, 22); gens(40, 196, '#2f5a8a', true); }
+        else if (sc === 'puits') { x.fillStyle = '#9a9488'; x.fillRect(46, 140, 54, 40); x.fillStyle = '#3a3630'; x.fillRect(52, 140, 42, 8); x.fillStyle = '#5a3a24'; x.fillRect(48, 96, 5, 46); x.fillRect(93, 96, 5, 46); x.fillRect(46, 94, 54, 5); gens(73, 140, '#b84a2a', false); }
+        else { x.fillStyle = '#7a5a3a'; x.fillRect(30, 128, 80, 52); x.fillStyle = '#8a7444'; x.beginPath(); x.moveTo(24, 130); x.lineTo(70, 96); x.lineTo(116, 130); x.fill();
+          for (let q = 0; q < 7; q++) { x.fillStyle = q % 2 ? '#f0a020' : '#d04010'; x.beginPath(); x.moveTo(40 + q * 10, 130); x.quadraticCurveTo(46 + q * 10, 100 - (q % 3) * 8, 50 + q * 10, 130); x.fill(); } }
+        x.fillStyle = '#5a2a20'; x.beginPath(); x.moveTo(140, 196); x.lineTo(150, 168); x.lineTo(160, 196); x.fill(); x.fillStyle = '#ecc9a2'; x.beginPath(); x.arc(150, 162, 6, 0, 7); x.fill();   // donateur à genoux, mains jointes
+        x.strokeStyle = '#ecc9a2'; x.lineWidth = 3; x.beginPath(); x.moveTo(152, 174); x.lineTo(162, 166); x.stroke();
+        x.fillStyle = '#efe2bc'; x.fillRect(22, h - 58, w - 44, 40); x.strokeStyle = '#6a4a2a'; x.lineWidth = 2; x.strokeRect(22, h - 58, w - 44, 40);
+        x.fillStyle = '#3a2416'; x.font = 'bold 21px Georgia, serif'; x.textAlign = 'center'; x.fillText('EX VOTO', w / 2, h - 34); x.font = 'italic 13px Georgia, serif';
+        x.fillText(['grâce reçue', 'sauvé de la chute', 'tiré du puits', 'sauvés du feu'][i], w / 2, h - 21);
+        for (let q = 0; q < 220; q++) { x.strokeStyle = 'rgba(60,40,20,0.12)'; x.lineWidth = 1; x.beginPath(); const px = Math.random() * w, py = Math.random() * h; x.moveTo(px, py); x.lineTo(px + (Math.random() - 0.5) * 14, py + (Math.random() - 0.5) * 14); x.stroke(); }   // craquelures
+        const vern = x.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, w); vern.addColorStop(0, 'rgba(160,120,40,0)'); vern.addColorStop(1, 'rgba(90,60,20,0.35)'); x.fillStyle = vern; x.fillRect(0, 0, w, h);   // vernis jauni
+      }, 256, 320);
+      plan(0.3, 0.375, tx, 1.75 + i * 0.44, d1 - 0.015, zc + 1.8 + (i % 2) * 0.42, false);
     });
-    const cire = new THREE.MeshStandardMaterial({ color: 0xead9a8, roughness: 0.55 });
-    for (let i = 0; i < 3; i++) { const h = new THREE.Shape(); h.moveTo(0, -0.07); h.bezierCurveTo(0.09, 0, 0.06, 0.07, 0, 0.035); h.bezierCurveTo(-0.06, 0.07, -0.09, 0, 0, -0.07);
-      const m = pose(new THREE.ExtrudeGeometry(h, { depth: 0.02, bevelEnabled: false }), cire, 3.55 + i * 0.22, d1 - 0.03, zc + 1.4 + (i % 2) * 0.1, false); }
+    // ex-voto de cire suspendus à une tringle de fer près de l'autel : jambes, bras, têtes, cœurs, un enfant emmailloté
+    const cire = new THREE.MeshStandardMaterial({ color: 0xe9d6a3, roughness: 0.5 });
+    const tr = pose(new THREE.CylinderGeometry(0.012, 0.012, 1.5, 6).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x2a2826, metalness: 0.6, roughness: 0.5 }), s1 - 1.6, d1 - 0.12, zc + 2.55, false);
+    tr.rotation.y += Math.PI / 2;
+    const formes = [
+      () => { const g = new THREE.CylinderGeometry(0.03, 0.045, 0.32, 8); const p = new THREE.BoxGeometry(0.06, 0.04, 0.12); p.translate(0, -0.17, 0.035); return mergeGeometries([g.toNonIndexed(), p.toNonIndexed()]); },   // jambe
+      () => { const g = new THREE.CylinderGeometry(0.025, 0.035, 0.28, 8); const m2 = new THREE.SphereGeometry(0.035, 8, 6); m2.translate(0, -0.16, 0); return mergeGeometries([g.toNonIndexed(), m2.toNonIndexed()]); },   // bras
+      () => new THREE.SphereGeometry(0.065, 12, 10).scale(0.85, 1.05, 0.95),   // tête
+      () => { const h = new THREE.Shape(); h.moveTo(0, -0.07); h.bezierCurveTo(0.09, 0, 0.06, 0.07, 0, 0.035); h.bezierCurveTo(-0.06, 0.07, -0.09, 0, 0, -0.07); return new THREE.ExtrudeGeometry(h, { depth: 0.025, bevelEnabled: true, bevelSize: 0.008, bevelThickness: 0.008, bevelSegments: 2 }); },   // cœur
+      () => new THREE.CapsuleGeometry(0.045, 0.16, 4, 8),   // enfant emmailloté
+    ];
+    for (let i = 0; i < 9; i++) {
+      const u = s1 - 2.25 + i * 0.16, l = 0.12 + (i % 3) * 0.08, f = formes[i % formes.length]();
+      pose(new THREE.CylinderGeometry(0.002, 0.002, l, 3), new THREE.MeshBasicMaterial({ color: 0x4a3a2a }), u, d1 - 0.12, zc + 2.55 - l / 2, false);
+      const m = pose(f, cire, u, d1 - 0.12, zc + 2.55 - l - 0.14);
+      m.rotation.y += i * 0.7;
+    }
   }
   // chevalet de peintre portant « La Vierge du chancelier Rolin » à sa vraie taille (66 × 62 cm), tourné vers l'entrée
   {
@@ -1759,7 +1830,7 @@ orbite.target.copy(V(6, -12, 6));
 orbite.update();
 
 let mode = 'survol';
-const marcheur = { x: -2, y: -6, cap: 14 * DEG, site: 0, z: null };
+const marcheur = { x: -2, y: -6, cap: 14 * DEG, site: 0, z: null, h: 0, vz: 0, saut: false };   // h : hauteur du saut au-dessus de l'appui
 let vol = null;
 function volerVers(l) {
   const cible = V(l.p[0], l.p[1], l.z - 4);
@@ -1779,10 +1850,11 @@ function placerMarcheur([x, y, capDeg, z]) { marcheur.x = x; marcheur.y = y; mar
 
 const sources = '<br><span style="font-size:11px;opacity:.8">Relevé : IGN, LiDAR HD et BD TOPO (licence ouverte Etalab 2.0) · textures : banque du Studio · textes : fascicules Oricourt.</span>';
 const aideSurvol = '<b>Survol</b> · glisser : tourner autour · molette ou pincement : zoom · clic droit ou deux doigts : déplacer. Cliquez un numéro pour lire la fiche du lieu.' + sources;
-const aidePied = "<b>Visite à pied</b> · ZQSD / WASD ou flèches : marcher · Maj : courir · glisser la souris : regarder. Sur tablette : manette à gauche, glisser à droite pour regarder." + sources;
+const aidePied = "<b>Visite à pied</b> · ZQSD / WASD ou flèches : marcher · Maj : courir · Espace : sauter · glisser la souris : regarder. Sur tablette : manette à gauche, glisser à droite pour regarder." + sources;
 function majAide() { $('aide').innerHTML = mode === 'survol' ? aideSurvol : aidePied; }
 function passerEnModeSurvol() {
   mode = 'survol'; orbite.enabled = true;
+  camera.near = 0.3; camera.far = 4000; camera.updateProjectionMatrix();
   $('b-survol').classList.add('actif'); $('b-pied').classList.remove('actif');
   $('manette').style.display = 'none';
   const c = V(marcheur.x, marcheur.y, hauteurSol(marcheur.x, marcheur.y));
@@ -1793,6 +1865,7 @@ function passerEnModeSurvol() {
 }
 function passerEnModePied() {
   mode = 'pied'; orbite.enabled = false; vol = null;
+  camera.near = 0.06; camera.far = 2500; camera.updateProjectionMatrix();
   $('b-pied').classList.add('actif'); $('b-survol').classList.remove('actif');
   if (matchMedia('(pointer: coarse)').matches) $('manette').style.display = 'block';
   majAide(); $('f-aller').style.display = 'none';
@@ -1849,7 +1922,10 @@ $('b-jeu').addEventListener('click', () => lancerJeu());
 
 // ------------------------------------------------------------------ marche : clavier, souris, tactile, collisions
 const touches = new Set();
-addEventListener('keydown', (e) => { if (JEU.touche(e)) return; if (mode === 'pied') { touches.add(e.code); if (e.code.startsWith('Arrow')) e.preventDefault(); } });
+addEventListener('keydown', (e) => {
+  if (JEU.touche(e)) return;
+  if (mode === 'pied') { touches.add(e.code); if (e.code.startsWith('Arrow')) e.preventDefault(); if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) marcheur.saut = true; } }
+});
 addEventListener('keyup', (e) => touches.delete(e.code));
 addEventListener('blur', () => touches.clear());
 let glisse = null;
@@ -1896,7 +1972,7 @@ function distSeg(x, y, a, b) {
 // Chaque surface donne la hauteur du sol en (x, y), connaissant la hauteur où l'on se trouve (zRef) pour les vis à
 // plusieurs tours. On passe d'une surface à l'autre si les hauteurs se raccordent (moins de 0,5 m d'écart).
 function zSurface(S, x, y, zRef) {
-  if (S.type === 'plan') return dedansPoly(x, y, S.poly) ? S.z : null;
+  if (S.type === 'plan') return dedansPoly(x, y, S.poly) && !(S.trous && S.trous.some((t) => dedansPoly(x, y, t))) ? S.z : null;
   if (S.type === 'rampe') {
     if (!dedansPoly(x, y, S.poly)) return null;
     const dx = S.b[0] - S.a[0], dy = S.b[1] - S.a[1], L2 = dx * dx + dy * dy, u = clamp(((x - S.a[0]) * dx + (y - S.a[1]) * dy) / L2, 0, 1);
@@ -1970,29 +2046,37 @@ function marcher(dt) {
     const nx = marcheur.x + dx, ny = marcheur.y + dy;
     if (marcheur.z != null && !ancien()) marcheur.z = null;
     if (marcheur.z != null) {
-      // en étage : on ne se déplace que sur une surface praticable à la même hauteur, ou l'on redescend au sol en bas d'un escalier
+      // en étage : on ne se déplace que sur une surface praticable à la même hauteur (ou un peu plus haut pendant un saut),
+      // ou l'on redescend au sol en bas d'un escalier
+      const zAbs = marcheur.z + marcheur.h;
       const essai = (x, y) => {
-        const z = etageEn(x, y, marcheur.z);
-        if (z != null) { marcheur.x = x; marcheur.y = y; marcheur.z = z; return true; }
-        if (Math.abs(hauteurSol(x, y) - marcheur.z) < 0.5 && !bloque(x, y)) { marcheur.x = x; marcheur.y = y; marcheur.z = null; return true; }
+        const z = etageEn(x, y, zAbs);
+        if (z != null) { marcheur.x = x; marcheur.y = y; marcheur.z = z; marcheur.h = Math.max(0, zAbs - z); return true; }
+        const zs = hauteurSol(x, y);
+        if (Math.abs(zs - zAbs) < 0.5 && !bloque(x, y)) { marcheur.x = x; marcheur.y = y; marcheur.z = null; marcheur.h = Math.max(0, zAbs - zs); return true; }
         return false;
       };
       essai(nx, ny) || essai(nx, marcheur.y) || essai(marcheur.x, ny);
     } else {
-      const zSol = hauteurSol(marcheur.x, marcheur.y), ze = ancien() ? etageEn(nx, ny, zSol) : null;
-      if (ze != null && Math.abs(ze - zSol) < 0.45) { marcheur.x = nx; marcheur.y = ny; marcheur.z = ze; }   // on monte sur la première marche
+      const zSol = hauteurSol(marcheur.x, marcheur.y), zAbs = zSol + marcheur.h, ze = ancien() ? etageEn(nx, ny, zAbs) : null;
+      if (ze != null && Math.abs(ze - zAbs) < 0.45) { marcheur.x = nx; marcheur.y = ny; marcheur.z = ze; marcheur.h = Math.max(0, zAbs - ze); }   // on monte sur la première marche
       else {
-        const dh = Math.abs(hauteurSol(nx, ny) - zSol);
-        if (dh < 0.45 || dh / Math.max(1e-3, Math.hypot(dx, dy)) < 1.6) {
+        const zn = hauteurSol(nx, ny), dh = Math.abs(zn - zSol);
+        if (dh < 0.45 || dh / Math.max(1e-3, Math.hypot(dx, dy)) < 1.6 || zn - zAbs < 0.3) {
+          const avant = [marcheur.x, marcheur.y];
           if (!bloque(nx, ny)) { marcheur.x = nx; marcheur.y = ny; }
           else if (!bloque(nx, marcheur.y)) marcheur.x = nx;
           else if (!bloque(marcheur.x, ny)) marcheur.y = ny;
+          if (marcheur.h > 0 && (marcheur.x !== avant[0] || marcheur.y !== avant[1])) marcheur.h = Math.max(0, zAbs - hauteurSol(marcheur.x, marcheur.y));
         }
       }
     }
   }
   if (marcheur.z != null && !ancien()) marcheur.z = null;
-  const z = (marcheur.z != null ? marcheur.z : hauteurSol(marcheur.x, marcheur.y)) + 1.65;
+  // saut (barre d'espace) : impulsion de 4 m/s, pesanteur ; on retombe sur l'appui du moment
+  if (marcheur.saut) { marcheur.saut = false; if (marcheur.h === 0 && !JEU.dialogue) marcheur.vz = 4.0; }
+  if (marcheur.h > 0 || marcheur.vz > 0) { marcheur.h += marcheur.vz * dt; marcheur.vz -= 9.81 * dt; if (marcheur.h <= 0) { marcheur.h = 0; marcheur.vz = 0; } }
+  const z = (marcheur.z != null ? marcheur.z : hauteurSol(marcheur.x, marcheur.y)) + marcheur.h + 1.65;
   camera.position.copy(V(marcheur.x, marcheur.y, z));
   const cp = Math.cos(marcheur.site);
   camera.lookAt(V(marcheur.x + Math.cos(marcheur.cap) * cp, marcheur.y + Math.sin(marcheur.cap) * cp, z + Math.sin(marcheur.site)));
@@ -2166,6 +2250,8 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
   const matNoir = new THREE.MeshStandardMaterial({ color: 0x14100c, roughness: 1 });
   const surChemin = (x, y) => { const i = Math.round(x + HALF), j = Math.round(HALF - y); return i < 0 || j < 0 || i >= N || j >= N || terre8[j * N + i] > 55; };
   const MAISONS = [];
+  // emprise du potager du colombier (environ 20 × 22 m, surtout au nord du colombier) : le hameau s'en écarte
+  const JARDIN = { x0: COLOMBIER.c[0] - 10, x1: COLOMBIER.c[0] + 10, y0: COLOMBIER.c[1] - 6, y1: COLOMBIER.c[1] + 16 };
   /** Une masure : solin de pierre, pans de bois hourdés de torchis, pignons, toit de chaume épais, porte de planches,
    *  petite fenêtre à volet, bûcher contre un pignon, parfois un tonneau et un banc. */
   function masure(x, y, ang, L, l, k) {
@@ -2224,65 +2310,84 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
         if (ech.some((p) => surChemin(...p) || dansLePasse(() => bloque(...p)))) continue;
         if (arbres.some((t) => Math.hypot(t[0] - x, t[1] - y) < Math.max(L, l) / 2 + 2.2)) continue;
         if (MAISONS.some((h) => Math.hypot(h.x - x, h.y - y) < 9)) continue;
+        if (x > JARDIN.x0 - L / 2 - 2 && x < JARDIN.x1 + L / 2 + 2 && y > JARDIN.y0 - L / 2 - 2 && y < JARDIN.y1 + L / 2 + 2) continue;
         if (Math.hypot(x - CENTRE_BROUILLARD[0], y - CENTRE_BROUILLARD[1]) > RAYON_BROUILLARD - 12) continue;
         masure(x, y, ang, L, l, k++); fait = true;
       }
     }
   }
-  // ---- le potager, le long du colombier : quatre planches bordées de plessis, choux, poireaux, pois ramés, simples
+  // ---- le potager du colombier : un grand jardin clos de plessis (environ 18 × 19 m) qui englobe le colombier et
+  // s'étend vers le nord ; planches de choux, poireaux, oignons, fèves, pois ramés et simples ; les chemins le traversent
   {
-    const C = COLOMBIER, Lp = 9, Wp = 6.2, cotes = [[C.dir[1], -C.dir[0]], [-C.dir[1], C.dir[0]], [-C.dir[0], -C.dir[1]]];
-    for (const u of cotes) {
-      const c = [C.c[0] + u[0] * (C.r + 1.6 + Wp / 2), C.c[1] + u[1] * (C.r + 1.6 + Wp / 2)], t = [-u[1], u[0]], P = (a, b) => [c[0] + t[0] * a + u[0] * b, c[1] + t[1] * a + u[1] * b];
-      const ech = []; for (let a = -Lp / 2; a <= Lp / 2; a += 1) for (let b = -Wp / 2; b <= Wp / 2; b += 1) ech.push(P(a, b));
-      const zs = ech.map((p) => hauteurTerrain(...p));
-      if (Math.max(...zs) - Math.min(...zs) > 1.4 || ech.some((p) => surChemin(...p) || dansLePasse(() => bloque(...p)))) continue;
-      if (data.arbres.some((a) => Math.hypot(a[0] - c[0], a[1] - c[1]) < 6)) continue;
-      const g = new THREE.Group(); G.vie.add(g);
-      const terre = toileCanvas(128, 128, (x, w, h) => { x.fillStyle = '#4a3624'; x.fillRect(0, 0, w, h); for (let k = 0; k < 900; k++) { const v = 50 + alea() * 50; x.fillStyle = `rgba(${v},${v * 0.75 | 0},${v * 0.5 | 0},0.6)`; x.fillRect(alea() * w, alea() * h, 2, 2); } for (let y = 6; y < h; y += 14) { x.fillStyle = 'rgba(25,18,10,0.45)'; x.fillRect(0, y, w, 3); } });
-      const matTerre = new THREE.MeshStandardMaterial({ map: terre, roughness: 1 }), matOsier = new THREE.MeshStandardMaterial({ color: 0x7a6040, roughness: 1 });
-      const ang = Math.atan2(t[1], t[0]);
-      const pose = (geo, mat, a, b, dzz = 0, ry = 0) => { const p = P(a, b), o = new THREE.Mesh(geo, mat); o.position.copy(V(p[0], p[1], hauteurTerrain(...p) + dzz)); o.rotation.y = ang + ry; o.castShadow = true; o.receiveShadow = true; g.add(o); return o; };
-      const inst = (geo, mat, liste) => { const im = new THREE.InstancedMesh(geo, mat, liste.length), mm = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
-        liste.forEach(([a, b, dzz, sc, rot], i) => { const p = P(a, b); e.set(0, rot || 0, 0); q.setFromEuler(e); mm.compose(V(p[0], p[1], hauteurTerrain(...p) + dzz), q, new THREE.Vector3(sc, sc, sc)); im.setMatrixAt(i, mm); });
-        im.castShadow = true; im.receiveShadow = true; g.add(im); return im; };
-      const planches = [-2.4, -0.85, 0.7, 2.25];
-      planches.forEach((b) => {
-        const s2 = new THREE.BoxGeometry(Lp - 1.2, 0.22, 1.05); { const uv = s2.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * 3, uv.getY(i)); }
-        pose(s2, matTerre, 0, b, 0.02);
-        for (const sb of [-0.55, 0.55]) pose(new THREE.BoxGeometry(Lp - 1.1, 0.24, 0.06), matOsier, 0, b + sb, 0.04);
-      });
-      const choux = [], poireaux = [], rames = [], feuilles = [], simples = [], fleurs = [];
-      for (let a = -3.6; a <= 3.6; a += 0.6) for (const sb of [-0.25, 0.25]) choux.push([a + (alea() - 0.5) * 0.1, planches[0] + sb, 0.2, 0.8 + alea() * 0.4, alea() * 6]);
-      for (let a = -3.7; a <= 3.7; a += 0.22) for (const sb of [-0.3, 0, 0.3]) poireaux.push([a, planches[1] + sb, 0.12, 0.8 + alea() * 0.4, alea() * 6]);
-      for (let a = -3.4; a <= 3.4; a += 0.85) { rames.push([a, planches[2], 0.1, 1, alea()]); for (let z = 0.4; z < 1.5; z += 0.28) feuilles.push([a + (alea() - 0.5) * 0.3, planches[2] + (alea() - 0.5) * 0.4, z, 0.7 + alea() * 0.5, alea() * 6]); }
-      for (let a = -3.6; a <= 3.6; a += 0.55) { simples.push([a, planches[3] + (alea() - 0.5) * 0.4, 0.15, 0.7 + alea() * 0.7, alea() * 6]); if (alea() < 0.6) fleurs.push([a + 0.2, planches[3] + (alea() - 0.5) * 0.5, 0.42, 0.8 + alea() * 0.5, 0]); }
-      inst(new THREE.SphereGeometry(0.2, 9, 7).scale(1, 0.75, 1), new THREE.MeshStandardMaterial({ color: 0x7f9a7a, roughness: 0.75 }), choux);
-      inst(new THREE.CylinderGeometry(0.02, 0.025, 0.5, 5).translate(0, 0.25, 0), new THREE.MeshStandardMaterial({ color: 0x5f7f4a, roughness: 0.8 }), poireaux);
-      inst(new THREE.ConeGeometry(0.35, 1.9, 4, 1, true).translate(0, 0.95, 0), new THREE.MeshStandardMaterial({ color: 0x8a7050, roughness: 1, wireframe: true }), rames);
-      inst(new THREE.IcosahedronGeometry(0.17, 0), new THREE.MeshStandardMaterial({ color: 0x4f7a34, roughness: 0.85, flatShading: true }), feuilles);
-      inst(new THREE.IcosahedronGeometry(0.2, 0).scale(1, 0.7, 1), new THREE.MeshStandardMaterial({ color: 0x6f8a4e, roughness: 0.9, flatShading: true }), simples);
-      inst(new THREE.SphereGeometry(0.05, 6, 5), new THREE.MeshStandardMaterial({ color: 0xc9a83a, roughness: 0.7 }), fleurs.filter((_, i) => i % 2 === 0));
-      inst(new THREE.SphereGeometry(0.05, 6, 5), new THREE.MeshStandardMaterial({ color: 0x8a6ab0, roughness: 0.7 }), fleurs.filter((_, i) => i % 2 === 1));
-      // clôture de plessis (osier tressé sur piquets), une entrée côté colombier
-      const texPlessis = toileCanvas(128, 64, (x, w, h) => { x.fillStyle = '#5a4630'; x.fillRect(0, 0, w, h); for (let y = 2; y < h; y += 7) { x.fillStyle = `rgb(${120 + alea() * 30 | 0},${95 + alea() * 25 | 0},${60 + alea() * 20 | 0})`; for (let px = 0; px < w; px += 16) { x.beginPath(); x.ellipse(px + ((y / 7) % 2) * 8, y + 3, 9, 3.2, 0, 0, 7); x.fill(); } } });
-      const matPlessis = new THREE.MeshStandardMaterial({ map: texPlessis, roughness: 1, side: THREE.DoubleSide });
-      const cote = (a0, b0, a1, b1, trou) => {
-        const L = Math.hypot(a1 - a0, b1 - b0), segs = trou ? [[0, L / 2 - 0.6], [L / 2 + 0.6, L]] : [[0, L]];
-        for (const [s0, s1] of segs) {
-          const f = (s) => [a0 + (a1 - a0) * s / L, b0 + (b1 - b0) * s / L], A = f(s0), B = f(s1), Lm = s1 - s0, mid = f((s0 + s1) / 2);
-          const pl = new THREE.PlaneGeometry(Lm, 0.85); { const uv = pl.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * Lm, uv.getY(i)); }
-          const o = pose(pl, matPlessis, mid[0], mid[1], 0.45, -Math.atan2(B[1] - A[1], B[0] - A[0]));
-          for (let s = s0; s <= s1 + 0.01; s += 1) { const q = f(Math.min(s, s1)); pose(new THREE.CylinderGeometry(0.04, 0.045, 1.05, 5), matOsier, q[0], q[1], 0.5); }
-          const pa = P(...A), pb = P(...B), d = [pb[0] - pa[0], pb[1] - pa[1]], dl = Math.hypot(...d), nn = [-d[1] / dl * 0.15, d[0] / dl * 0.15];
-          obstacles.push({ poly: [[pa[0] + nn[0], pa[1] + nn[1]], [pb[0] + nn[0], pb[1] + nn[1]], [pb[0] - nn[0], pb[1] - nn[1]], [pa[0] - nn[0], pa[1] - nn[1]]], village: false, medievalSeulement: true });
+    const C = COLOMBIER, { x0, x1, y0, y1 } = JARDIN, g = new THREE.Group(); G.vie.add(g);
+    const arbres = data.arbres.map((t) => [t[0], t[1]]);
+    const dansCouloir = (x, y) => { const dx = x - C.c[0], dy = y - C.c[1], lon = dx * C.dir[0] + dy * C.dir[1], lat = Math.abs(-dx * C.dir[1] + dy * C.dir[0]); return lon > 0 && lat < 1.1; };
+    const libre = (x, y) => !surChemin(x, y) && Math.hypot(x - C.c[0], y - C.c[1]) > C.r + 1.3 && !dansCouloir(x, y) && !arbres.some((t) => Math.hypot(t[0] - x, t[1] - y) < 1.4) && !dansLePasse(() => bloque(x, y));
+    const terre = toileCanvas(128, 128, (x, w, h) => { x.fillStyle = '#4a3624'; x.fillRect(0, 0, w, h); for (let k = 0; k < 900; k++) { const v = 50 + alea() * 50; x.fillStyle = `rgba(${v},${v * 0.75 | 0},${v * 0.5 | 0},0.6)`; x.fillRect(alea() * w, alea() * h, 2, 2); } for (let y = 6; y < h; y += 14) { x.fillStyle = 'rgba(25,18,10,0.45)'; x.fillRect(0, y, w, 3); } });
+    const matTerre = new THREE.MeshStandardMaterial({ map: terre, roughness: 1 }), matOsier = new THREE.MeshStandardMaterial({ color: 0x7a6040, roughness: 1 });
+    const P = (x, y, dz = 0) => V(x, y, hauteurTerrain(x, y) + dz);
+    const listes = { choux: [], poireaux: [], oignons: [], feves: [], rames: [], feuilles: [], simples: [], fleursJ: [], fleursV: [] };
+    const CULTURES = ['choux', 'poireaux', 'oignons', 'feves', 'pois', 'simples'];
+    let rang = 0;
+    for (let y = y0 + 1.2; y < y1 - 0.8; y += 1.6, rang++) {
+      const cult = CULTURES[rang % CULTURES.length];
+      let deb = null;
+      for (let x = x0 + 0.8; x <= x1 - 0.6 + 0.01; x += 0.5) {
+        const ok = x <= x1 - 0.6 && libre(x, y) && libre(x, y - 0.5) && libre(x, y + 0.5);
+        if (ok && deb == null) deb = x;
+        if ((!ok || x - deb >= 4.5) && deb != null) {
+          const fin = ok ? x : x - 0.5;
+          if (fin - deb >= 1.5) {
+            const L = fin - deb, cx = (deb + fin) / 2, sb = new THREE.BoxGeometry(L, 0.22, 1.1); { const uv = sb.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * L / 3, uv.getY(i)); }
+            const m = new THREE.Mesh(sb, matTerre); m.position.copy(P(cx, y, 0.02)); m.receiveShadow = true; g.add(m);
+            for (const dy of [-0.57, 0.57]) { const o = new THREE.Mesh(new THREE.BoxGeometry(L + 0.1, 0.24, 0.06), matOsier); o.position.copy(P(cx, y + dy, 0.04)); g.add(o); }
+            for (let u = deb + 0.25; u < fin - 0.1; u += cult === 'poireaux' || cult === 'oignons' ? 0.22 : cult === 'pois' ? 0.8 : 0.55) {
+              const r = alea;
+              if (cult === 'choux') for (const dy of [-0.25, 0.25]) listes.choux.push([u, y + dy, 0.2, 0.8 + r() * 0.4]);
+              else if (cult === 'poireaux') for (const dy of [-0.3, 0, 0.3]) listes.poireaux.push([u, y + dy, 0.12, 0.8 + r() * 0.4]);
+              else if (cult === 'oignons') for (const dy of [-0.3, 0, 0.3]) { listes.oignons.push([u, y + dy, 0.14, 0.8 + r() * 0.3]); listes.poireaux.push([u, y + dy, 0.12, 0.45 + r() * 0.2]); }
+              else if (cult === 'feves') for (const dy of [-0.25, 0.25]) listes.feves.push([u, y + dy, 0.3, 0.7 + r() * 0.5]);
+              else if (cult === 'pois') { listes.rames.push([u, y, 0.1, 1]); for (let z = 0.4; z < 1.5; z += 0.28) listes.feuilles.push([u + (r() - 0.5) * 0.3, y + (r() - 0.5) * 0.4, z, 0.7 + r() * 0.5]); }
+              else { listes.simples.push([u, y + (r() - 0.5) * 0.4, 0.15, 0.7 + r() * 0.7]); if (r() < 0.6) (r() < 0.5 ? listes.fleursJ : listes.fleursV).push([u + 0.2, y + (r() - 0.5) * 0.5, 0.42, 0.8 + r() * 0.5]); }
+            }
+          }
+          deb = ok ? x : null;
         }
-      };
-      const A2 = Lp / 2, B2 = Wp / 2;
-      cote(-A2, -B2, A2, -B2, true); cote(A2, -B2, A2, B2); cote(A2, B2, -A2, B2); cote(-A2, B2, -A2, -B2);
-      JEU.potager = c;
-      break;
+      }
     }
+    const inst = (geo, mat, liste) => { if (!liste.length) return; const im = new THREE.InstancedMesh(geo, mat, liste.length), mm = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
+      liste.forEach(([x, y, dz, sc], i) => { e.set(0, alea() * 6.28, 0); q.setFromEuler(e); mm.compose(P(x, y, dz), q, new THREE.Vector3(sc, sc, sc)); im.setMatrixAt(i, mm); });
+      im.castShadow = true; im.receiveShadow = true; g.add(im); };
+    inst(new THREE.SphereGeometry(0.2, 9, 7).scale(1, 0.75, 1), new THREE.MeshStandardMaterial({ color: 0x7f9a7a, roughness: 0.75 }), listes.choux);
+    inst(new THREE.CylinderGeometry(0.02, 0.025, 0.5, 5).translate(0, 0.25, 0), new THREE.MeshStandardMaterial({ color: 0x5f7f4a, roughness: 0.8 }), listes.poireaux);
+    inst(new THREE.SphereGeometry(0.05, 8, 6).scale(1, 0.85, 1), new THREE.MeshStandardMaterial({ color: 0xe8dcc0, roughness: 0.6 }), listes.oignons);
+    inst(new THREE.IcosahedronGeometry(0.22, 0).scale(1, 1.5, 1), new THREE.MeshStandardMaterial({ color: 0x55783c, roughness: 0.85, flatShading: true }), listes.feves);
+    inst(new THREE.ConeGeometry(0.35, 1.9, 4, 1, true).translate(0, 0.95, 0), new THREE.MeshStandardMaterial({ color: 0x8a7050, roughness: 1, wireframe: true }), listes.rames);
+    inst(new THREE.IcosahedronGeometry(0.17, 0), new THREE.MeshStandardMaterial({ color: 0x4f7a34, roughness: 0.85, flatShading: true }), listes.feuilles);
+    inst(new THREE.IcosahedronGeometry(0.2, 0).scale(1, 0.7, 1), new THREE.MeshStandardMaterial({ color: 0x6f8a4e, roughness: 0.9, flatShading: true }), listes.simples);
+    inst(new THREE.SphereGeometry(0.05, 6, 5), new THREE.MeshStandardMaterial({ color: 0xc9a83a, roughness: 0.7 }), listes.fleursJ);
+    inst(new THREE.SphereGeometry(0.05, 6, 5), new THREE.MeshStandardMaterial({ color: 0x8a6ab0, roughness: 0.7 }), listes.fleursV);
+    // clôture de plessis, interrompue là où passent les chemins ; une entrée au milieu du côté nord et du côté sud
+    const texPlessis = toileCanvas(128, 64, (x, w, h) => { x.fillStyle = '#5a4630'; x.fillRect(0, 0, w, h); for (let y = 2; y < h; y += 7) { x.fillStyle = `rgb(${120 + alea() * 30 | 0},${95 + alea() * 25 | 0},${60 + alea() * 20 | 0})`; for (let px = 0; px < w; px += 16) { x.beginPath(); x.ellipse(px + ((y / 7) % 2) * 8, y + 3, 9, 3.2, 0, 0, 7); x.fill(); } } });
+    const matPlessis = new THREE.MeshStandardMaterial({ map: texPlessis, roughness: 1, side: THREE.DoubleSide });
+    const geoPiquet = new THREE.CylinderGeometry(0.04, 0.045, 1.05, 5), piquets = [];
+    const cote = (A, B, entree) => {
+      const L = Math.hypot(B[0] - A[0], B[1] - A[1]), t = [(B[0] - A[0]) / L, (B[1] - A[1]) / L];
+      for (let u = 0; u < L - 0.01; u += 1) {
+        const u1 = Math.min(L, u + 1), m = [A[0] + t[0] * (u + u1) / 2, A[1] + t[1] * (u + u1) / 2];
+        if (entree && Math.abs((u + u1) / 2 - L / 2) < 1.1) continue;
+        if (surChemin(...m) || dansLePasse(() => bloque(...m)) || arbres.some((q) => Math.hypot(q[0] - m[0], q[1] - m[1]) < 0.8)) continue;
+        const a = [A[0] + t[0] * u, A[1] + t[1] * u], b = [A[0] + t[0] * u1, A[1] + t[1] * u1], za = hauteurTerrain(...a), zb = hauteurTerrain(...b);
+        const pl = new THREE.PlaneGeometry(u1 - u, 0.85); { const uv = pl.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (u1 - u), uv.getY(i)); }
+        const o = new THREE.Mesh(pl, matPlessis); o.position.copy(V(m[0], m[1], (za + zb) / 2 + 0.45)); o.rotation.y = Math.atan2(t[1], t[0]); o.castShadow = true; g.add(o);
+        piquets.push(a, b);
+        const n = [-t[1] * 0.15, t[0] * 0.15];
+        obstacles.push({ poly: [[a[0] + n[0], a[1] + n[1]], [b[0] + n[0], b[1] + n[1]], [b[0] - n[0], b[1] - n[1]], [a[0] - n[0], a[1] - n[1]]], village: false, medievalSeulement: true });
+      }
+    };
+    cote([x0, y0], [x1, y0], true); cote([x1, y0], [x1, y1], false); cote([x1, y1], [x0, y1], true); cote([x0, y1], [x0, y0], false);
+    { const im = new THREE.InstancedMesh(geoPiquet, matOsier, piquets.length), mm = new THREE.Matrix4(); piquets.forEach((q, i) => { mm.makeTranslation(...P(q[0], q[1], 0.5).toArray()); im.setMatrixAt(i, mm); }); im.castShadow = true; g.add(im); }
+    JEU.potager = [C.c[0], C.c[1] + 5];
   }
 
   // ---- animaux de basse-cour (formes simples)
@@ -2382,7 +2487,7 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
   const CLE = 'oricourt_jeu_1435';
   // progression : sceaux, sujets écoutés, épreuves manquées (par habitant et en tout), trésors, expertises (id → juste ?),
   // lieux explorés, félicitations déjà montrées
-  const ETAT = ['sceaux', 'vus', 'rates', 'tresors', 'expertises', 'lieux'];
+  const ETAT = ['sceaux', 'vus', 'rates', 'tresors', 'expertises', 'lieux', 'oeuvres'];
   const viderEtat = () => { for (const k of ETAT) JEU[k] = {}; JEU.ratesN = 0; JEU.felicite = false; };
   viderEtat();
   const sauver = () => { try { localStorage.setItem(CLE, JSON.stringify({ ...Object.fromEntries(ETAT.map((k) => [k, JEU[k]])), ratesN: JEU.ratesN, felicite: JEU.felicite })); } catch (e) { /* stockage indisponible */ } };
@@ -2400,9 +2505,10 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
       ['Trésors découverts', TRESORS.filter((o) => JEU.tresors[o.id]).length, TRESORS.length, B.tresor],
       ['Objets bien expertisés', EXPERTISES.filter((o) => JEU.expertises[o.id] === true).length, EXPERTISES.length, B.expertise],
       ['Lieux explorés', LIEUX_JEU.filter((i) => JEU.lieux[i]).length, LIEUX_JEU.length, B.lieu],
+      ['Œuvre d’art comprise', JEU.oeuvres.rolin === true ? 1 : 0, 1, B.oeuvre],
     ];
     const total = lignes.reduce((s2, l) => s2 + l[1] * l[3], 0), max = lignes.reduce((s2, l) => s2 + l[2] * l[3], 0);
-    const donnees = n + JEU.ratesN + Object.keys(JEU.expertises).length, justes = n + lignes[4][1];
+    const donnees = n + JEU.ratesN + Object.keys(JEU.expertises).length + Object.keys(JEU.oeuvres).length, justes = n + lignes[4][1] + lignes[6][1];
     const reussite = donnees ? justes / donnees : 0;
     const rang = RANGS.find((r) => total / max >= r[0])[1];
     return { lignes, total, max, reussite, donnees, rang, reste: lignes.slice(3).some((l) => l[1] < l[2]) };
@@ -2414,6 +2520,15 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
       `</tbody><tfoot><tr><td>Total</td><td></td><td>${b.total} / ${b.max} XP</td></tr></tfoot></table>` +
       `<p class="rang">Réponses justes : <b>${b.donnees ? Math.round(b.reussite * 100) + ' %' : '—'}</b> · Rang : <b>${b.rang}</b></p>`;
   }
+  // carte ouverte : flèches, Page suivante / précédente et Espace font défiler ; Échap ferme la carte quand elle n'a qu'un bouton
+  function toucheEcran(e) {
+    const bx = ecran.querySelector('.boite'); if (!bx) return;
+    const pas = { ArrowDown: 60, ArrowUp: -60, PageDown: bx.clientHeight * 0.85, PageUp: -bx.clientHeight * 0.85, Space: bx.clientHeight * 0.85 }[e.code];
+    if (pas) { bx.scrollBy({ top: pas, behavior: 'smooth' }); e.preventDefault(); return; }
+    const bt = ecran.querySelectorAll('.actions button');
+    if (e.code === 'Escape' && bt.length === 1) bt[0].click();
+  }
+  ecran.addEventListener('wheel', (e) => { const bx = ecran.querySelector('.boite'); if (bx) { bx.scrollTop += e.deltaY; e.preventDefault(); } }, { passive: false });
   function ecranCarte(titre, html, boutons) {
     ecran.innerHTML = `<div class="boite"><h2>${titre}</h2>${html}<div class="actions">${boutons.map((b2, k) => `<button data-k="${k}" class="${b2.classe || ''}">${b2.texte}</button>`).join('')}</div></div>`;
     ecran.style.display = 'grid'; JEU.dialogue = { ecran: true };
@@ -2604,9 +2719,16 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
   JEU.objets = OBJETS;
   function examiner(o) {
     if (o.objet === 'oeuvre') {
+      const Q = OEUVRE.quiz, enJeu = epoque === 'jeu', repondu = JEU.oeuvres.rolin != null;
+      const quiz = () => ecranCarte(OEUVRE.titre, `<p><b>${Q.question}</b></p>`, Q.choix.map((c, k) => ({ texte: c, classe: 'choix', action: () => {
+        const juste = k === Q.juste; JEU.oeuvres.rolin = juste; sauver(); majCarnet();
+        ecranCarte(OEUVRE.titre, `<p>${juste ? Q.bravo : Q.rate}</p>` + (juste ? `<p class="gain">+${BAREME.oeuvre} XP · Œuvre d’art comprise</p>` : ''), [{ texte: 'Fermer' }]);
+      } })));
       ecranCarte(OEUVRE.titre, `<div class="oeuvre"><img src="${OEUVRE.image}" alt="${OEUVRE.titre}"><p class="cartel">${OEUVRE.cartel}</p></div>` +
         OEUVRE.parties.map(([t, p]) => `<h3>${t}</h3><p>${p}</p>`).join('') +
-        `<p><a href="${OEUVRE.video}" target="_blank" rel="noopener">▶ Voir la vidéo de la restauration</a></p>`, [{ texte: 'Fermer' }]);
+        `<p><a href="${OEUVRE.video}" target="_blank" rel="noopener">▶ Voir la vidéo de la restauration</a></p>` +
+        (enJeu && !repondu ? `<p><i>Une question t'attend : as-tu bien regardé le tableau ? (+${BAREME.oeuvre} XP)</i></p>` : ''),
+        enJeu && !repondu ? [{ texte: 'Répondre à la question', action: quiz }, { texte: 'Plus tard', classe: 'discret' }] : [{ texte: 'Fermer' }]);
       return;
     }
     if (o.objet === 'tresor') {
@@ -2626,10 +2748,9 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
   invite.addEventListener('click', agir);
   JEU.touche = (e) => {
     if (epoque === 'medieval' && !JEU.dialogue && (e.code === 'KeyE' || e.code === 'Enter') && cible && cible.objet === 'oeuvre') { agir(); return true; }
-    if (epoque === 'medieval' && JEU.dialogue && JEU.dialogue.ecran) return true;
+    if (JEU.dialogue && JEU.dialogue.ecran && epoque !== 'actuel') { toucheEcran(e); return true; }
     if (epoque !== 'jeu') return false;
     if (JEU.dialogue) {
-      if (JEU.dialogue.ecran) return true;
       if (e.code === 'Escape') fermerDialogue();
       else if (/^(Digit|Numpad)[1-9]$/.test(e.code) && document.activeElement.tagName !== 'TEXTAREA') choisir(+e.code.slice(-1) - 1);
       return true;
@@ -2807,7 +2928,7 @@ function lancerJeu() { window.lancerJeuInterne(); }
 function quitterJeu() { window.quitterJeuInterne(); }
 
 // accès direct par ancre (#visite, #moyen-age, #jeu) et API de test
-window.oricourt = { GRANDE_SALLE, hauteurTerrain, ETAGES, CHAPELLE, HERSE, RECON, DONJON, etageEn, PUITS, COLOMBIER, SALLE, GAL, MUSIQUE, renderer, scene, camera, orbite, G, LIEUX, choisir, changerEpoque, passerEnModePied, passerEnModeSurvol, placerMarcheur, marcheur, hauteurSol, data, bloque, marcher, touches, JEU, lancerJeu, THREE };
+window.oricourt = { marcher, touches, SALLES_TOURS, GRANDE_SALLE, hauteurTerrain, ETAGES, CHAPELLE, HERSE, RECON, DONJON, etageEn, PUITS, COLOMBIER, SALLE, GAL, MUSIQUE, renderer, scene, camera, orbite, G, LIEUX, choisir, changerEpoque, passerEnModePied, passerEnModeSurvol, placerMarcheur, marcheur, hauteurSol, data, bloque, marcher, touches, JEU, lancerJeu, THREE };
 if (location.hash === '#moyen-age') changerEpoque('medieval');
 if (location.hash === '#jeu') lancerJeu();
 if (location.hash === '#visite') { placerMarcheur([-12, -14, 14]); passerEnModePied(); }

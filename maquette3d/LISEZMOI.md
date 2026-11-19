@@ -3,7 +3,7 @@
 Maquette du château d'Oricourt à l'échelle réelle, tirée du relevé LiDAR HD de l'IGN, avec un jeu pour les élèves. Le voyageur est projeté en 1435 et doit rencontrer neuf habitants du château pour retrouver le chemin du présent.
 
 - **Ouvrir** : `index.html` (servi par GitHub Pages). Le jeu s'ouvre directement avec `index.html#jeu`.
-- **Commandes** : ZQSD ou les flèches pour marcher, la souris pour regarder, E pour parler. Dans un dialogue, les touches 1 à 9 choisissent une réplique et Échap fait partir.
+- **Commandes** : ZQSD ou les flèches pour marcher, la souris pour regarder, Espace pour sauter, E pour parler ou regarder un objet. Sur une carte (le tableau de la chapelle, par exemple), la molette, les flèches ou Page suivante font défiler. Dans un dialogue, les touches 1 à 9 choisissent une réplique et Échap fait partir.
 - **Sources** :
   - relevé IGN (LiDAR HD, BD TOPO, BD ORTHO), sous licence ouverte Etalab 2.0, avec la mention « IGN » ;
   - textures et portraits peints par Codex ;
@@ -14,7 +14,7 @@ Maquette du château d'Oricourt à l'échelle réelle, tirée du relevé LiDAR H
 - **Hypothèses** : la restitution de 1435 reste à valider avec le propriétaire. Elle comprend :
   - **chemins de ronde** sur les courtines de la haute-cour, avec un parapet d'un mètre ; on y monte par un escalier droit adossé à la courtine sud ;
   - **tours creuses**, avec une salle au niveau des chemins de ronde :
-    - la tour ouest a une porte au sol et un escalier en vis ;
+    - la tour ouest a une porte au sol et un escalier en vis qui occupe toute la largeur de la tour ; il débouche dans la salle par une trémie ;
     - la tour maîtresse n'a qu'une entrée perchée ;
     - la tourelle sud-ouest a une échelle de meunier vers sa terrasse ;
   - **hourds de bois** au sommet des tours et du donjon ;
@@ -28,4 +28,5 @@ Maquette du château d'Oricourt à l'échelle réelle, tirée du relevé LiDAR H
   - **porte à herse** fermant l'angle sud-est de la basse-cour ;
   - **grande salle** (lieu 5), à deux nefs sur les piliers relevés ;
   - **façade photographique** du logis : retirée en 1435 ;
-  - **village et jardin** : hameau de masures à pans de bois et chaume, potager le long du colombier.
+  - **chapelle, mobilier** : ex-voto de cire (membres, têtes, cœurs) et petits tableaux votifs peints, dessinés pour la maquette ; parement d'autel et dossal brodés ;
+  - **village et jardin** : hameau de masures à pans de bois et chaume ; grand potager clos de plessis autour du colombier (environ 20 × 22 m).
