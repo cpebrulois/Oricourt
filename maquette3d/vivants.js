@@ -228,13 +228,23 @@ class Habitant {
       this.tourner(P.cap, dt);
       this.prochain -= dt; R.t -= dt;
       if (this.prochain <= 0 && P.gestes && P.gestes.length) { this.prochain = P.periode[0] + this.R() * (P.periode[1] - P.periode[0]); this.gesticuler(P.gestes[Math.floor(this.R() * P.gestes.length)]); }
-      if (R.t <= 0 && !this.geste && R.postes.length > 1) { R.i = (R.i + 1) % R.postes.length; R.etat = 'marche'; this.poser(R.postes[R.i].trajet || R.trajet, 0.35); }
+      if (R.t <= 0 && !this.geste && R.postes.length > 1) { R.i = (R.i + 1) % R.postes.length; R.etat = 'marche'; R.via = [...(R.postes[R.i].via || [])]; this.poser(R.postes[R.i].trajet || R.trajet, 0.35); }
     } else {
-      const dx = P.x - this.x, dy = P.y - this.y, d = Math.hypot(dx, dy), v = ((this.fond && this.fond.userData.v) || 1) * (this.racine.scale.x || 1);
+      // points de passage (portes, escaliers, chemins de ronde) avant d'atteindre le poste
+      const cible = R.via && R.via.length ? { x: R.via[0][0], y: R.via[0][1] } : P;
+      const dx = cible.x - this.x, dy = cible.y - this.y, d = Math.hypot(dx, dy), v = ((this.fond && this.fond.userData.v) || 1) * (this.racine.scale.x || 1);
       if (this.objetMarche) this.objetMarche.visible = !!P.porte;
-      if (d < 0.12) { R.etat = 'poste'; R.t = P.duree[0] + this.R() * (P.duree[1] - P.duree[0]); this.prochain = 0.8 + this.R() * 2; if (this.objetMarche) this.objetMarche.visible = false; }
-      else { const p = Math.min(d, v * dt); this.x += dx / d * p; this.y += dy / d * p; this.tourner(Math.atan2(dx, -dy), dt * 1.6); }
+      if (d < 0.15 && cible !== P) R.via.shift();
+      else if (d < 0.12) { R.etat = 'poste'; R.t = P.duree[0] + this.R() * (P.duree[1] - P.duree[0]); this.prochain = 0.8 + this.R() * 2; if (this.objetMarche) this.objetMarche.visible = false; }
+      else { const p = Math.min(d, v * dt); this.x += dx / d * p; this.y += dy / d * p; this.tourner(Math.atan2(dx, -dy), dt * 1.6); this.suivreEtage(); }
     }
+  }
+  /** Hauteur des pieds : le sol, ou un étage praticable (escalier, chemin de ronde, salle de tour) quand il s'y raccorde. */
+  suivreEtage() {
+    if (!this.etage) return;
+    const zs = this.sol(this.x, this.y);
+    if (this.z != null) { const z = this.etage(this.x, this.y, this.z); if (z != null) this.z = z; else if (Math.abs(zs - this.z) < 0.5) this.z = null; }
+    else { const z = this.etage(this.x, this.y, zs); if (z != null && z - zs > 0.02) this.z = z; }
   }
   tourner(cap, dt) { if (cap == null) return; let dr = cap - this.objet.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); this.objet.rotation.y += dr * Math.min(1, dt * 3.5); }
 }
@@ -423,10 +433,13 @@ function majOutils(H) {
 
 async function habillerMeshy(id) {
   const g = await glb('meshy/' + id + '.glb');
-  const racine = g.scene, os = new Map(), maillages = [];
+  // un même modèle peut habiller deux figurants (deux porteuses, deux gardes) : le second reçoit une copie articulée,
+  // aux étoffes un peu plus sombres pour qu'on ne croie pas voir un jumeau
+  const copie = !!g.servi; g.servi = true;
+  const racine = copie ? clonerArticule(g.scene) : g.scene, os = new Map(), maillages = [];
   racine.traverse((o) => {
     if (o.isBone) os.set(o.name.replace(/^mixamorig:?/, ''), o);
-    if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; maillages.push(o); }
+    if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; maillages.push(o); if (copie && o.material) { o.material = o.material.clone(); o.material.color.offsetHSL(0.04, -0.08, -0.1); } }
   });
   const boite = new THREE.Box3().setFromObject(racine);
   const corps = { id: 'meshy_' + id, taille_m: boite.max.y - boite.min.y, hanches_pos: os.get('Hips') ? os.get('Hips').position.toArray() : [0, 1, 0] };
@@ -466,10 +479,11 @@ export async function chargerVivants(ctx) {
       h.objet.add(m.racine);
       const H = new Habitant(m, m.mvt || mvt, h.act, hache(h.id));
       if (h.meshy) { H.meshy = true; H.outils = outillerMeshy(m, h.meshy); }
-      H.id = h.id; H.objet = h.objet;
+      H.id = h.id; H.objet = h.objet; H.sol = ctx.sol; H.etage = ctx.etage || null; H.z = null;
       if (h.routine && h.routine.postes.length) {
         H.routine = { ...h.routine, i: 0, etat: 'poste', t: 2 + Math.random() * 6 };
         H.x = h.routine.postes[0].x; H.y = h.routine.postes[0].y; H.objet.rotation.y = h.routine.postes[0].cap ?? H.objet.rotation.y;
+        if (h.routine.postes[0].z != null) H.z = h.routine.postes[0].z;   // il commence sur un étage (salle de tour, chemin de ronde)
       }
       // porteur de la vie procédurale du Studio (respiration, appuis, regard, clignements)
       H.porteur = { objet: H.racine, os: H.os, maillages: H.maillages, desc: { id: h.id }, hauteur: H.hauteur,
@@ -491,7 +505,7 @@ export async function chargerVivants(ctx) {
         const parle = parlant && parlant.id === H.id ? parlant : null;
         const px = H.routine ? H.x : H.marche ? H.marche.x : null, py = H.routine ? H.y : H.marche ? H.marche.y : null;
         const arret = !!voyageur && px != null && Math.hypot(voyageur.x - px, voyageur.y - py) < (H.arret || 3.6);
-        if (H.routine) { H.maj(dt, parle, arret); H.objet.position.set(H.x, ctx.sol(H.x, H.y), -H.y); continue; }
+        if (H.routine) { H.maj(dt, parle, arret); H.objet.position.set(H.x, H.z != null ? H.z : ctx.sol(H.x, H.y), -H.y); continue; }
         if (H.marche && arret) { H.poser('attendre'); H.marcheArretee = true; }
         else if (H.marche && H.marcheArretee) { H.marcheArretee = false; H.poser(H.act.marche, 0.35); }
         if (H.marche && !arret) {

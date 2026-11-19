@@ -193,16 +193,19 @@ export const FIGURANTS = [
   { id: 'forgeron', pos: [49, -29], studio: { sexe: 'M', pieces: ['tunique', 'chausses', 'bottes', 'ceinture_large', 'coupe_courte', 'barbe'], teintes: { etoffe: '#5a4a3a', laine: '#2e2a26', cuir: '#3a2a1c', cheveux: '#1e1a16' }, objet: 'marteau' },
     activite: { fond: 'attendre_fort', gestes: ['forger', 'forger', 'souffler'], periode: [2.5, 6] } },
   { id: 'porteuse', pos: [-4, -12], studio: { sexe: 'F', pieces: ['tunique', 'bottes', 'ceinture'], robe: { couleur: '#7d6c4c', tablier: '#d6cbb0' }, teintes: { etoffe: '#8a7a5a', laine: '#4a3a2a', cuir: '#4a3220', cheveux: '#5a3a22' }, coiffes: ['coiffe'] },
-    activite: { fond: 'attendre', marche: 'porter', chemin: [[-6, -14], [-9, -3], [-2, 6], [7, 3], [2, -8]] } },
+    activite: { fond: 'attendre', gestes: ['ramasser'], periode: [5, 9] } },
+  { id: 'porteuse2', modele: 'porteuse', pos: [6, -6], studio: { sexe: 'F' }, activite: { fond: 'attendre', gestes: ['ramasser'], periode: [5, 9] } },
   { id: 'sergent', pos: [24, -32], studio: { sexe: 'M', pieces: ['gambison', 'chausses', 'bottes', 'ceinture_large', 'coupe_courte', 'barbe'], teintes: { etoffe: '#5a5a48', cuir: '#3a2a1c', laine: '#33312e', cheveux: '#3a2a1c' }, coiffes: ['chapel'], objet: 'lance' },
-    activite: { fond: 'attendre', marche: 'patrouiller', chemin: [[24, -32], [38, -40], [50, -24], [36, -18]] } },
+    activite: { fond: 'guetter', gestes: ['guetter'], periode: [6, 10] } },
+  { id: 'sergent2', modele: 'sergent', pos: [10, -30], studio: { sexe: 'M' }, activite: { fond: 'guetter', gestes: ['guetter'], periode: [6, 10] } },
 ];
 
-// masures de torchis et de chaume : [x, y, angle en degrés, longueur, largeur]
+// le hameau : masures à pans de bois, torchis et chaume, hors de l'enceinte : [x, y, longueur, largeur]. Ce sont des
+// points voulus : le jeu cherche autour une place plane, hors des chemins, des arbres et des murs, porte tournée vers le chemin.
 // (la masure qui était en [46, -46], adossée au flanc sud-est de la grange sud, fermait le passage vers le colombier :
-//  retirée le 15 novembre)
+//  retirée le 15 novembre ; celle qui se trouvait devant la porte à herse aussi, le 19 novembre)
 export const MASURES = [
-  [58, -40, -30, 6, 4], [30, -58, 70, 7, 4.2], [48, -62, 10, 5.5, 3.8], [16, -50, -15, 5, 3.6], [62, -56, 50, 6, 4],
+  [24, -88, 6, 4.2], [34, -97, 7, 4.5], [47, -97, 5.5, 4], [58, -90, 6.5, 4.2], [66, -74, 6, 4], [-4, -84, 6, 4.2], [-16, -76, 5.5, 4], [4, -98, 6.5, 4.4],
 ];
 
 // ---- routines de métier (habitants animés du Studio) : postes de travail reliés par des trajets à pied.
@@ -220,9 +223,10 @@ export const ROUTINES = {
   mahaut: { trajet: 'porter', objetMarche: 'seau', postes: [
     { a: 'puits', vers: 'puits', fond: 'attendre', gestes: ['tirer_corde', 'tirer_corde', 'hisser'], periode: [1.2, 3.5], duree: [16, 26] },
     { a: { arche: 0, d: 1.7 }, porte: true, fond: 'attendre', gestes: ['se_rechauffer', 'ranger', 'designer'], periode: [4, 8], duree: [10, 16] }] },
-  etienne: { trajet: 'marcher_pensif', postes: [
-    { a: 'base', objet: 'banc', fond: 'assis', gestes: [], periode: [9, 9], duree: [22, 34] },
-    { a: [3, 2], fond: 'attendre', gestes: ['prier'], periode: [5, 9], duree: [10, 15] }] },
+  // Frère Étienne quitte son banc pour aller prier à la chapelle (par la tourelle d'escalier), puis revient
+  etienne: { trajet: 'marcher_pensif', chemins: true, postes: [
+    { a: 'base', objet: 'banc', fond: 'assis', gestes: [], periode: [9, 9], duree: [26, 40] },
+    { lieu: 'chapelle', fond: 'attendre', gestes: ['prier', 'prier'], periode: [2, 4], duree: [24, 36] }] },
   perrin: { trajet: 'patrouiller', postes: [
     { a: 'base', fond: 'guetter', gestes: ['s_etirer', 'souffler'], periode: [8, 14], duree: [14, 22] },
     { a: [7, 3], ou: [[5, -4], [0, 6], [-6, 2]], fond: 'guetter', gestes: ['guetter'], periode: [6, 10], duree: [10, 16] }] },
@@ -244,6 +248,21 @@ export const ROUTINES = {
   palefrenier: { trajet: 'marcher', postes: [
     { a: 'base', vers: [3, -2], fond: 'attendre', gestes: ['travailler', 'ramasser'], periode: [2, 5], duree: [20, 30] },
     { a: [-3, 1.5], trajet: 'porter', fond: 'attendre', gestes: ['ramasser', 'fendre'], periode: [2, 4], duree: [8, 12] }] },
+  // les porteuses d'eau : au puits, puis à la cuisine (salle voûtée) ou à l'abreuvoir des bêtes, seau plein
+  porteuse: { trajet: 'marcher', objetMarche: 'seau', chemins: true, postes: [
+    { lieu: 'puits', angle: 70, vers: 'puits', fond: 'attendre', gestes: ['tirer_corde', 'hisser'], periode: [1.5, 3.5], duree: [12, 18] },
+    { lieu: 'cuisine', trajet: 'porter', porte: true, fond: 'attendre', gestes: ['ranger', 'ramasser'], periode: [3, 6], duree: [8, 12] }] },
+  porteuse2: { trajet: 'marcher', objetMarche: 'seau', chemins: true, postes: [
+    { lieu: 'puits', angle: 0, rayon: 2.6, vers: 'puits', fond: 'attendre', gestes: ['tirer_corde', 'hisser'], periode: [1.5, 3.5], duree: [12, 18] },
+    { lieu: 'abreuvoir', trajet: 'porter', porte: true, fond: 'attendre', gestes: ['ramasser', 'designer'], periode: [3, 6], duree: [10, 14] }] },
+  // les gardes font le chemin de ronde : l'un monte par l'escalier de la courtine sud vers la courtine ouest,
+  // l'autre va de la salle de la tour maîtresse au-dessus de la porte de la haute-cour
+  sergent: { trajet: 'patrouiller', chemins: true, postes: [
+    { lieu: 'escalier', fond: 'guetter', gestes: ['s_etirer'], periode: [6, 10], duree: [6, 10] },
+    { lieu: 'ronde_ouest', fond: 'guetter', gestes: ['guetter'], periode: [5, 9], duree: [20, 30] }] },
+  sergent2: { trajet: 'patrouiller', chemins: true, postes: [
+    { lieu: 'tour_maitresse', fond: 'guetter', gestes: ['s_etirer', 'souffler'], periode: [6, 10], duree: [14, 22] },
+    { lieu: 'ronde_porte', fond: 'guetter', gestes: ['guetter'], periode: [5, 9], duree: [18, 26] }] },
   jardinier: { trajet: 'marcher', postes: [
     { a: 'base', fond: 'attendre', gestes: ['recolter', 'recolter', 'souffler'], periode: [1.5, 4], duree: [20, 30] },
     { a: [2.5, 1], fond: 'attendre', gestes: ['recolter'], periode: [1.5, 4], duree: [15, 20] }] },
@@ -259,7 +278,7 @@ export const TRESORS = [
     texte: "Dedans, quelques pièces. On compte en livres, en sous et en deniers : 1 livre vaut 20 sous, et 1 sou vaut 12 deniers. La livre et le sou servent à compter ; dans la bourse, on trouve surtout des deniers et des « gros ». En temps de guerre, on cachait son argent dans la terre : on retrouve encore aujourd'hui de ces trésors enfouis." },
   { id: 'ecritoire', forme: 'ecritoire', ancre: 'colombier', decal: [-1.0, 1.1], nom: "Une plume d'oie et une corne à encre",
     texte: "On écrit avec une plume d'oie taillée au canif, trempée dans une encre de noix de galle. Le support le plus solide est le parchemin, une peau de mouton ou de veau préparée ; le papier, venu de Chine par le monde arabe, se répand peu à peu. Tous les livres sont encore copiés à la main : l'imprimerie de Gutenberg n'apparaîtra que vers 1450." },
-  { id: 'merelles', forme: 'merelles', ancre: [3.5, 11.5], nom: 'Une pierre gravée de lignes',
+  { id: 'merelles', forme: 'merelles', ancre: 'grande_salle', nom: 'Une pierre gravée de lignes',
     texte: "Trois carrés emboîtés reliés par des traits : c'est un plateau de mérelles, le « jeu du moulin ». Chaque joueur pose puis déplace neuf pions ; qui en aligne trois forme un « moulin » et prend un pion à l'autre. Gardes et soldats en gravaient sur les pierres des châteaux pour passer le temps." },
   { id: 'fer', forme: 'fer', ancre: [41.5, -17], nom: 'Un fer à cheval et ses clous',
     texte: "Le cheval est un bien précieux : un destrier, le cheval de guerre, coûte une petite fortune. Le maréchal-ferrant cloue des fers sous ses sabots pour les protéger sur les chemins de pierre, et le soigne quand il boite. On ferre les chevaux en Europe depuis le Moyen Âge central, vers l'an mil." },
@@ -292,3 +311,18 @@ export const EXPERTISES = [
 // Barème du tableau d'honneur
 export const BAREME = { sceau: 100, premierCoup: 50, ecoute: 10, tresor: 75, expertise: 40, lieu: 15 };
 export const RANGS = [[0.9, "Maître chroniqueur d'Oricourt"], [0.7, 'Chevalier du savoir'], [0.5, 'Écuyer curieux'], [0.3, 'Page attentif'], [0, 'Voyageur égaré']];
+
+// ---- l'œuvre du chevalet de la chapelle : un petit cours (touche E près du chevalet)
+export const OEUVRE = {
+  titre: 'La Vierge du chancelier Rolin',
+  image: 'tex/vierge_rolin.jpg',
+  video: 'https://www.youtube.com/watch?v=fZVqgCwlQOM',
+  cartel: 'Jan van Eyck, vers 1435. Peinture à l’huile sur bois, 66 × 62 cm. Paris, musée du Louvre. Le tableau du chevalet est à sa vraie taille.',
+  parties: [
+    ['Qui est représenté ?', "À gauche, à genoux devant un livre de prières, Nicolas Rolin (vers 1376-1462). Chancelier du duc de Bourgogne Philippe le Bon pendant plus de trente ans, c’est l’homme le plus puissant de l’État bourguignon après le duc. C’est lui qui acquiert Oricourt en 1435, l’année même où l’on date le tableau. En 1443, avec sa femme Guigone de Salins, il fonde les Hospices de Beaune pour soigner les pauvres."],
+    ['Ce qui est audacieux', "Face à lui, la Vierge tient l’Enfant Jésus, qui le bénit ; un ange pose une couronne sur la tête de Marie. Rolin, un homme, est peint à la même taille que la Vierge, dans la même pièce : c’est très hardi. Il affiche sa richesse (manteau de brocart bordé de fourrure) et sa piété : il se recommande à Dieu pour le salut de son âme."],
+    ['Regarde au fond', "Derrière les arcades, un jardin fermé de fleurs, deux petits personnages penchés sur un parapet, puis une ville, un pont, un fleuve, des collines, des montagnes enneigées. Ce paysage est peint avec une précision presque microscopique : on y compte des centaines de minuscules personnages. Cette ville n’existe pas : elle est imaginée."],
+    ['La technique de Van Eyck', "Jan van Eyck est le peintre de la cour du duc. Il perfectionne la peinture à l’huile : il superpose des couches très fines et transparentes, les glacis, qui donnent aux couleurs leur profondeur et leur éclat, et permettent de peindre chaque fil d’or et chaque reflet. Le tableau était sans doute destiné à l’église Notre-Dame-du-Châtel d’Autun, la ville natale de Rolin : on l’a longtemps appelé « la Vierge d’Autun »."],
+    ['Une restauration historique', "Entré au Louvre en 1800, le tableau n’y avait jamais été restauré. Avec les siècles, son vernis s’était oxydé et l’avait assombri. Le Centre de recherche et de restauration des musées de France l’a étudié à partir de 2021, puis restauré d’août 2022 à décembre 2023 en allégeant ces vernis jaunis : les couleurs d’origine sont réapparues. Le Louvre l’a présenté au public en 2024 dans l’exposition « Revoir Van Eyck »."],
+  ],
+};
