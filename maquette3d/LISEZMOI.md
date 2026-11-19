@@ -17,7 +17,7 @@ Maquette du château d'Oricourt à l'échelle réelle, tirée du relevé LiDAR H
     - la tour ouest a une porte au sol et un escalier en vis qui occupe toute la largeur de la tour ; il débouche dans la salle par une trémie ;
     - la tour maîtresse n'a qu'une entrée perchée ;
     - la tourelle sud-ouest a une échelle de meunier vers sa terrasse ;
-  - **hourds de bois** au sommet des tours et du donjon ;
+  - **hourds de bois** au sommet des tours et du donjon ; ceux de la tour maîtresse et de la tour ouest se visitent, par des échelles de meunier et des planchers intermédiaires ; leur plancher est percé d'assommoirs ;
   - **hauteurs** :
     - murs de la tour maîtresse abaissés à 19,4 m, faîte vers 26 m ;
     - donjon (logis Rolin) monté à 20,5 m, faîte vers 28 m ;

@@ -470,7 +470,7 @@ function libre(x, y) {      // le point devant le mur n'est pas dans un autre b�
 }
 function percer(b, poly, zEgout) {
   if (b.role === 'colombier' || b.role === 'appentis' || b.ruine && b.role === 'tourelle_sud_ouest') return;
-  const cible = b.groupe === 'village' ? OUV.actuel : OUV.commun;
+  const cible = b.groupe === 'village' || ROLES_TOUR.has(b.role) ? OUV.actuel : OUV.commun;   // les tours de 1435 sont reconstruites : leurs baies d'aujourd'hui n'y sont pas
   let aire = 0; poly.forEach((p, k) => { const c = poly[(k + 1) % poly.length]; aire += p[0] * c[1] - c[0] * p[1]; });
   const sens = aire > 0 ? 1 : -1, tour = ROLES_TOUR.has(b.role), chateau = b.groupe === 'chateau' && !tour;
   let graine = Math.abs(Math.round(poly[0][0] * 31 + poly[0][1] * 17));
@@ -1053,6 +1053,12 @@ function hourds(poly, z, saillie, groupe) {
     groupe.add(maille(pl2.geometrie(), M.bois));
     const { L: Lm, t: tm } = axe2(a, b), no0 = [A[0] - a[0], A[1] - a[1]];
     let no = [tm[1], -tm[0]]; if (no[0] * no0[0] + no[1] * no0[1] < 0) no = [-no[0], -no[1]];
+    for (let u = 1.05; u < Lm - 0.6; u += 1.1) {   // assommoirs : trappes ouvertes dans le plancher pour tirer et jeter à la verticale du mur
+      const q0 = [a[0] + tm[0] * (u - 0.2) + no[0] * 0.25, a[1] + tm[1] * (u - 0.2) + no[1] * 0.25], q1 = [a[0] + tm[0] * (u + 0.2) + no[0] * 0.25, a[1] + tm[1] * (u + 0.2) + no[1] * 0.25];
+      const q2 = [q1[0] + no[0] * 0.45, q1[1] + no[1] * 0.45], q3 = [q0[0] + no[0] * 0.45, q0[1] + no[1] * 0.45], ga = new Geo();
+      ga.quad(V(q0[0], q0[1], z + 0.012), V(q1[0], q1[1], z + 0.012), V(q2[0], q2[1], z + 0.012), V(q3[0], q3[1], z + 0.012), [0, 0], [1, 0], [1, 1], [0, 1], new THREE.Vector3(0, 1, 0));
+      groupe.add(maille(ga.geometrie(), M.trou, false));
+    }
     for (let u = 0.5; u < Lm - 0.3; u += 1.1) {
       const c = [a[0] + tm[0] * u + no[0] * (saillie - 0.9) / 2, a[1] + tm[1] * u + no[1] * (saillie - 0.9) / 2];
       const po = maille(new THREE.BoxGeometry(0.2, 0.24, saillie + 0.9), M.bois); po.position.copy(V(c[0], c[1], z - 0.2));
@@ -1172,8 +1178,23 @@ function tourCreuse(cfg) {
     visP = { c, ro, a0, pas };
   }
   const trappe = cfg.echelle ? (() => { const { a, b: bb } = cfg.echelle, t = axe2(a, bb).t, n = [-t[1], t[0]], e = 0.55; return [[bb[0] - t[0] * 1.2 + n[0] * e, bb[1] - t[1] * 1.2 + n[1] * e], [bb[0] + t[0] * 0.25 + n[0] * e, bb[1] + t[1] * 0.25 + n[1] * e], [bb[0] + t[0] * 0.25 - n[0] * e, bb[1] + t[1] * 0.25 - n[1] * e], [bb[0] - t[0] * 1.2 - n[0] * e, bb[1] - t[1] * 1.2 - n[1] * e]]; })() : null;
+  // montée aux hourds : échelles de meunier en volées alternées le long du grand côté, planchers intermédiaires
+  const rectSur = (E, u0, u1, e) => { const t = axe2(E.a, E.b).t, n = [-t[1], t[0]], A = [E.a[0] + t[0] * u0, E.a[1] + t[1] * u0], B = [E.b[0] + t[0] * u1, E.b[1] + t[1] * u1]; return [[A[0] + n[0] * e, A[1] + n[1] * e], [B[0] + n[0] * e, B[1] + n[1] * e], [B[0] - n[0] * e, B[1] - n[1] * e], [A[0] - n[0] * e, A[1] - n[1] * e]]; };
+  const volees = [];
+  if (cfg.montee) {
+    const ci = centre4(inter), A01 = axe2(inter[0], inter[1]), A12 = axe2(inter[1], inter[2]);
+    const [uL, lL, uC, lC] = A01.L >= A12.L ? [A01.t, A01.L, A12.t, A12.L] : [A12.t, A12.L, A01.t, A01.L];
+    const nF = Math.ceil((cfg.zH - cfg.salle) / 3.8), zs = [...Array(nF + 1)].map((_, k) => cfg.salle + (cfg.zH - cfg.salle) * k / nF), run = lL - 1.4, lat0 = lC / 2 - 0.55;
+    // côté de la première volée : hors de la trémie de la vis s'il y en a une
+    const horsTremie = (q) => !visP || Math.hypot(q[0] - visP.c[0], q[1] - visP.c[1]) > visP.ro + 0.1 || (() => { let w = Math.atan2(q[1] - visP.c[1], q[0] - visP.c[0]) - (visP.a0 - (cfg.salle - zSol) / visP.pas * 2 * Math.PI); w = ((w % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI); return w > 200 * DEG; })();
+    let sg = 1; { const b0 = [ci[0] + uC[0] * lat0, ci[1] + uC[1] * lat0]; if (![-1, 1].every((e) => horsTremie([b0[0] + uL[0] * e * run / 2, b0[1] + uL[1] * e * run / 2]))) sg = -1; }
+    for (let k = 0; k < nF; k++) {
+      const lat = sg * (k % 2 ? -1 : 1) * lat0, dir = k % 2 ? -1 : 1, b0 = [ci[0] + uC[0] * lat, ci[1] + uC[1] * lat];
+      volees.push({ a: [b0[0] - uL[0] * dir * run / 2, b0[1] - uL[1] * dir * run / 2], b: [b0[0] + uL[0] * dir * run / 2, b0[1] + uL[1] * dir * run / 2], z0: zs[k], z1: zs[k + 1] });
+    }
+  }
   // le pied de l'échelle de meunier n'est pas dans le plancher de la salle (sinon on y resterait)
-  const piedEchelle = cfg.echelle ? (() => { const { a, b: bb } = cfg.echelle, t = axe2(a, bb).t, n = [-t[1], t[0]], e = 0.5; return [[a[0] + t[0] * 0.15 + n[0] * e, a[1] + t[1] * 0.15 + n[1] * e], [bb[0] + t[0] * 0.3 + n[0] * e, bb[1] + t[1] * 0.3 + n[1] * e], [bb[0] + t[0] * 0.3 - n[0] * e, bb[1] + t[1] * 0.3 - n[1] * e], [a[0] + t[0] * 0.15 - n[0] * e, a[1] + t[1] * 0.15 - n[1] * e]]; })() : null;
+  const piedEchelle = volees.length ? rectSur(volees[0], 0.15, 0.3, 0.5) : cfg.echelle ? (() => { const { a, b: bb } = cfg.echelle, t = axe2(a, bb).t, n = [-t[1], t[0]], e = 0.5; return [[a[0] + t[0] * 0.15 + n[0] * e, a[1] + t[1] * 0.15 + n[1] * e], [bb[0] + t[0] * 0.3 + n[0] * e, bb[1] + t[1] * 0.3 + n[1] * e], [bb[0] + t[0] * 0.3 - n[0] * e, bb[1] + t[1] * 0.3 - n[1] * e], [a[0] + t[0] * 0.15 - n[0] * e, a[1] + t[1] * 0.15 - n[1] * e]]; })() : null;
   dalle(inter, cfg.salle, 0.35, M.bois, grp, ouvertureVis ? [ouvertureVis] : []);
   ETAGES.push({ type: 'plan', poly: iSalle, z: cfg.salle, trous: [tremie, piedEchelle].filter(Boolean) });
   for (const P of portes) {   // seuils : du chemin de ronde à la salle, à travers le mur (jusqu'au nu intérieur)
@@ -1184,9 +1205,21 @@ function tourCreuse(cfg) {
     torche(q[0], q[1], cfg.salle + 1.5, [(ci[0] - q[0]) / dq, (ci[1] - q[1]) / dq]); }
   if (visP) vis(visP.c, 0.24, visP.ro, zSol, cfg.salle, visP.a0, grp, -1, visP.pas, 18);
   if (cfg.echelle) { echelle(cfg.echelle.a, cfg.echelle.b, cfg.salle, cfg.echelle.z1, 0.8, grp); }
-  dalle(inter, cfg.plafond || cfg.salle + 3.4, 0.35, M.bois, grp, trappe ? [trappe] : []);
-  if (!cfg.plafond) dalle(inter, cfg.zH, 0.3, M.bois, grp);   // plancher des hourds
-  SALLES_TOURS.push({ R: rectExpanse(R, 2.2), z: cfg.salle, role: b.role, centre: centre4(inter), vis: visP, echelle: cfg.echelle || null, zSol, porte: zSol != null ? surCote(R, cfg.porteSol, axe2(R[cfg.porteSol], R[(cfg.porteSol + 1) % 4]).L / 2, -1.5) : null });
+  if (volees.length) {
+    volees.forEach((E, k) => {
+      echelle(E.a, E.b, E.z0, E.z1, 0.75, grp);
+      const tr = rectSur(E, 0.35, 0.2, 0.55), haut = k === volees.length - 1;
+      dalle(inter, E.z1, 0.3, M.bois, grp, [tr]);
+      if (haut) {   // plancher des hourds : l'intérieur, le dessus des murs et la galerie de bois en surplomb
+        ETAGES.push({ type: 'plan', poly: decaler(R, 1.1 - 0.35), z: E.z1, trous: [tr] });
+        // pas de torche ici : le bois des hourds et le feu ne font pas bon ménage
+      } else ETAGES.push({ type: 'plan', poly: iSalle, z: E.z1, trous: [tr, rectSur(volees[k + 1], 0.15, 0.3, 0.5)] });
+    });
+  } else {
+    dalle(inter, cfg.plafond || cfg.salle + 3.4, 0.35, M.bois, grp, trappe ? [trappe] : []);
+    if (!cfg.plafond) dalle(inter, cfg.zH, 0.3, M.bois, grp);   // plancher des hourds
+  }
+  SALLES_TOURS.push({ R: rectExpanse(R, 2.2), z: cfg.salle, role: b.role, centre: centre4(inter), vis: visP, echelle: cfg.echelle || null, volees, zSol, porte: zSol != null ? surCote(R, cfg.porteSol, axe2(R[cfg.porteSol], R[(cfg.porteSol + 1) % 4]).L / 2, -1.5) : null });
   obstacles.push({ poly: R, village: false, role: b.role, medievalSeulement: true });
   return { inter, zSol };
 }
@@ -1194,7 +1227,7 @@ function tourCreuse(cfg) {
 // ---- les trois tours de l'enceinte de la haute-cour
 if (tours.tour_maitresse) {   // entrée perchée : on n'y entre que par les chemins de ronde
   const b = tours.tour_maitresse, zH = 19.4;
-  tourCreuse({ b, ep: 2.2, zH, salle: 11.45, murs: ['mur_4', 'mur_7'], porteSol: null });
+  tourCreuse({ b, ep: 2.2, zH, salle: 11.45, murs: ['mur_4', 'mur_7'], porteSol: null, montee: true });
   const ext = hourds(b.rect, zH, 1.1, G.medieval);
   pavillon(decaler(ext, 0.3), zH + 2.3, 4.4, M.tuiles, G.medieval);
 }
@@ -1202,7 +1235,7 @@ if (tours.tour_ouest) {
   const b = tours.tour_ouest, R = b.rect, zH = 21.5, inter = rectExpanse(R, -1.9);
   // escalier en vis sur toute la largeur ; porte au sol côté haute-cour (est)
   const kEst = [0, 1, 2, 3].sort((i, j) => { const d = (k) => { const m = [(R[k][0] + R[(k + 1) % 4][0]) / 2, (R[k][1] + R[(k + 1) % 4][1]) / 2]; return Math.hypot(m[0] - CENTRE_HC[0], m[1] - CENTRE_HC[1]); }; return d(i) - d(j); })[0];
-  tourCreuse({ b, ep: 1.9, zH, salle: 10.8, murs: ['mur_3', 'mur_8'], porteSol: kEst, visPleine: true });
+  tourCreuse({ b, ep: 1.9, zH, salle: 10.8, murs: ['mur_3', 'mur_8'], porteSol: kEst, visPleine: true, montee: true });
   const ext = hourds(R, zH, 1.1, G.medieval);
   pavillon(decaler(ext, 0.3), zH + 2.3, 5.2, M.tuiles, G.medieval);
 }
@@ -1228,7 +1261,8 @@ if (tours.tourelle_sud_ouest) {   // encorbellement en pierre au raccord des ma�
     pts.forEach((p, k) => {
       const a = pts[Math.max(0, k - 1)], c = pts[Math.min(n - 1, k + 1)], { t } = axe2([a.x, a.y], [c.x, c.y]);
       let nx = -t[1], ny = t[0]; if ((p.x - CENTRE_HC[0]) * nx + (p.y - CENTRE_HC[1]) * ny < 0) { nx = -nx; ny = -ny; }
-      ext.push({ ...p, x: p.x + nx * (w.epaisseur / 2 - 0.25), y: p.y + ny * (w.epaisseur / 2 - 0.25) });
+      // le parapet ne descend que de 1,5 m sous le chemin de ronde (sinon il fermait la porte de la haute-cour)
+      ext.push({ ...p, x: p.x + nx * (w.epaisseur / 2 - 0.25), y: p.y + ny * (w.epaisseur / 2 - 0.25), base: hautFn(p) });
       int.push({ x: p.x - nx * 0.325, y: p.y - ny * 0.325, z: hautFn(p) });   // milieu de la partie libre, entre parapet et bord côté cour
     });
     ruban(ext, 0.5, (p) => hautFn(p) + 1.0, geo, 0.2);
