@@ -101,7 +101,7 @@
   .dlg-libre-form textarea { width: 100%; box-sizing: border-box; font: 15px/1.4 Inter, sans-serif; padding: 9px 11px; border-radius: 6px; border: 1px solid rgba(217,164,65,0.5); background: rgba(20,15,9,0.8); color: #f3ead8; resize: none; }
   .dlg-libre-actions { display: flex; gap: 8px; margin-top: 7px; } .dlg-libre-actions .dlg-option { width: auto; }
   .dlg-aide { font-size: 11.5px; color: #9d906f; text-align: center; flex: none; }
-  #b-musique[aria-pressed="false"] { opacity: 0.55; text-decoration: line-through; }
+  #b-musique[aria-pressed="false"], #b-sons[aria-pressed="false"] { opacity: 0.55; text-decoration: line-through; }
   html.dialogue-ouvert #invite, html.dialogue-ouvert #manette { display: none !important; }
   @media (max-width: 760px) {
     #dlg { width: 100vw; height: 100dvh; border-width: 18px; border-image-width: 18px; }
@@ -177,6 +177,8 @@
     <button id="b-jeu">⏳ Jouer : l'an 1435</button>
     <button id="b-carnet">Carnet</button>
     <button id="b-musique" title="Musique d'ambiance (en 1435)" aria-pressed="true">♪ Musique</button>
+    <button id="b-sons" title="Sons du château : vent, forge, poules, pigeons, cloche, oiseaux le jour, grillons la nuit" aria-pressed="true">🔔 Sons</button>
+    <button id="b-heure" title="Heure du jour (une journée dure une heure, la nuit 22 minutes). Clic : matin, midi, soir, nuit. Clic droit : pause">☀ 10 h 00</button>
   </div>
 </div>
 

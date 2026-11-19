@@ -3,6 +3,10 @@
 Maquette du château d'Oricourt à l'échelle réelle, tirée du relevé LiDAR HD de l'IGN, avec un jeu pour les élèves. Le voyageur est projeté en 1435 et doit rencontrer neuf habitants du château pour retrouver le chemin du présent.
 
 - **Ouvrir** : `index.html` (servi par GitHub Pages). Le jeu s'ouvre directement avec `index.html#jeu`.
+- **Journée et ambiance** :
+  - le soleil suit une journée d'automne (lever vers 7 h, coucher vers 18 h 30) ; la journée dure une heure réelle, la nuit 22 minutes ;
+  - le bouton ☀ passe au matin, à midi, au soir ou à la nuit ; un clic droit le met en pause ;
+  - le bouton 🔔 coupe ou rétablit les sons. Ils sont tous synthétisés dans le navigateur, sans fichier : vent (plus fort en hauteur), forge, poules, pigeons, oiseaux le jour, grillons la nuit, torches, cloche de la chapelle qui sonne les heures, cor du guet quand on franchit la herse.
 - **Commandes** : ZQSD ou les flèches pour marcher, la souris pour regarder, Espace pour sauter, E pour parler ou regarder un objet. Sur une carte (le tableau de la chapelle, par exemple), la molette, les flèches ou Page suivante font défiler. Dans un dialogue, les touches 1 à 9 choisissent une réplique et Échap fait partir.
 - **Sources** :
   - relevé IGN (LiDAR HD, BD TOPO, BD ORTHO), sous licence ouverte Etalab 2.0, avec la mention « IGN » ;

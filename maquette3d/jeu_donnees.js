@@ -9,7 +9,7 @@ export const INTRO = {
     "Pendant la visite, tu t'es penché au-dessus de la margelle du vieux puits. Une brume froide est montée du fond, a rempli la galerie, puis toute la cour…",
     "Quand elle se dissipe, les murs ont retrouvé leurs créneaux, les tours leurs toits. Des poules courent dans la basse-cour. Nous sommes à l'automne de l'an 1435.",
     "Un brouillard étrange encercle le château : impossible de s'éloigner. Pour rentrer chez toi, il faut comprendre ce monde. Parle aux habitants : chacun te confiera un savoir et te posera une question. Gagne leurs neuf sceaux, puis reviens au puits.",
-    "Garde l'œil ouvert en chemin : le château a ses secrets, et le brouillard a pu égarer ici des choses qui n'ont rien à y faire. Écouter, explorer, examiner, regarder une œuvre d'art et bien répondre du premier coup te rapporte des points d'expérience : ton carnet tient les comptes. La barre d'espace te fait sauter.",
+    "Garde l'œil ouvert en chemin : le château a ses secrets, et le brouillard a pu égarer ici des choses qui n'ont rien à y faire. Écouter, explorer, examiner, regarder une œuvre d'art, défendre les hourds de la tour maîtresse et bien répondre du premier coup te rapporte des points d'expérience : ton carnet tient les comptes. La barre d'espace te fait sauter.",
   ],
   bouton: "Entrer dans l'an 1435",
 };
@@ -254,7 +254,7 @@ export const ROUTINES = {
     { lieu: 'cuisine', trajet: 'porter', porte: true, fond: 'attendre', gestes: ['ranger', 'ramasser'], periode: [3, 6], duree: [8, 12] }] },
   porteuse2: { trajet: 'marcher', objetMarche: 'seau', chemins: true, postes: [
     { lieu: 'puits', angle: 0, rayon: 2.6, vers: 'puits', fond: 'attendre', gestes: ['tirer_corde', 'hisser'], periode: [1.5, 3.5], duree: [12, 18] },
-    { lieu: 'abreuvoir', trajet: 'porter', porte: true, fond: 'attendre', gestes: ['ramasser', 'designer'], periode: [3, 6], duree: [10, 14] }] },
+    { lieu: 'abreuvoir', trajet: 'porter', porte: true, fond: 'attendre', gestes: ['ramasser', 'ranger'], periode: [3, 6], duree: [10, 14] }] },
   // les gardes font le chemin de ronde : l'un monte par l'escalier de la courtine sud vers la courtine ouest,
   // l'autre va de la salle de la tour maîtresse au-dessus de la porte de la haute-cour
   sergent: { trajet: 'patrouiller', chemins: true, postes: [
@@ -262,7 +262,8 @@ export const ROUTINES = {
     { lieu: 'ronde_ouest', fond: 'guetter', gestes: ['guetter'], periode: [5, 9], duree: [20, 30] }] },
   sergent2: { trajet: 'patrouiller', chemins: true, postes: [
     { lieu: 'tour_maitresse', fond: 'guetter', gestes: ['s_etirer', 'souffler'], periode: [6, 10], duree: [14, 22] },
-    { lieu: 'ronde_porte', fond: 'guetter', gestes: ['guetter'], periode: [5, 9], duree: [18, 26] }] },
+    { lieu: 'ronde_porte', fond: 'guetter', gestes: ['guetter'], periode: [5, 9], duree: [18, 26] },
+    { lieu: 'hourds_maitresse', fond: 'guetter', gestes: ['guetter', 's_etirer'], periode: [5, 9], duree: [24, 34] }] },
   jardinier: { trajet: 'marcher', postes: [
     { a: 'base', fond: 'attendre', gestes: ['recolter', 'recolter', 'souffler'], periode: [1.5, 4], duree: [20, 30] },
     { a: [2.5, 1], fond: 'attendre', gestes: ['recolter'], periode: [1.5, 4], duree: [15, 20] }] },
@@ -309,7 +310,7 @@ export const EXPERTISES = [
     texte: "La faucille sert à moissonner les céréales, poignée par poignée. La faux, plus grande, sert surtout à couper l'herbe des prés pour faire le foin." },
 ];
 // Barème du tableau d'honneur
-export const BAREME = { sceau: 100, premierCoup: 50, ecoute: 10, tresor: 75, expertise: 40, lieu: 15, oeuvre: 60 };
+export const BAREME = { sceau: 100, premierCoup: 50, ecoute: 10, tresor: 75, expertise: 40, lieu: 15, oeuvre: 60, defense: 25 };
 export const RANGS = [[0.9, "Maître chroniqueur d'Oricourt"], [0.7, 'Chevalier du savoir'], [0.5, 'Écuyer curieux'], [0.3, 'Page attentif'], [0, 'Voyageur égaré']];
 
 // ---- l'œuvre du chevalet de la chapelle : un petit cours (touche E près du chevalet)
@@ -337,4 +338,22 @@ export const OEUVRE = {
     ['La technique de Van Eyck', "Jan van Eyck est le peintre de la cour du duc. Il perfectionne la peinture à l’huile : il superpose des couches très fines et transparentes, les glacis, qui donnent aux couleurs leur profondeur et leur éclat, et permettent de peindre chaque fil d’or et chaque reflet. Le tableau était sans doute destiné à l’église Notre-Dame-du-Châtel d’Autun, la ville natale de Rolin : on l’a longtemps appelé « la Vierge d’Autun »."],
     ['Une restauration historique', "Entré au Louvre en 1800, le tableau n’y avait jamais été restauré. Avec les siècles, son vernis s’était oxydé et l’avait assombri. Le Centre de recherche et de restauration des musées de France l’a étudié à partir de 2021, puis restauré d’août 2022 à décembre 2023 en allégeant ces vernis jaunis : les couleurs d’origine sont réapparues. Le Louvre l’a présenté au public en 2024 dans l’exposition « Revoir Van Eyck »."],
   ],
+};
+
+// ---- l'épreuve des hourds (tour maîtresse) : trois menaces, trois bonnes réponses du défenseur
+export const DEFENSE = {
+  titre: 'Alerte dans les hourds !',
+  intro: "Le guetteur a sonné du cor : une troupe ennemie approche d'Oricourt. Tu es dans les hourds de la tour maîtresse, cette galerie de bois posée en surplomb au sommet du mur. Le sergent te confie la défense : à chaque menace, choisis la bonne riposte.",
+  questions: [
+    { q: "Des assaillants abrités sous un toit de bois roulant approchent du pied de la tour avec un bélier. Du chemin de ronde, on ne les voit plus : ils sont juste sous le mur. Que fais-tu ?",
+      choix: ["Je jette des pierres par les assommoirs, les trappes du plancher des hourds, à la verticale du mur.", "Je tire à l'arbalète par une fente de la paroi de bois, droit devant moi.", "Je descends ouvrir la porte pour les surprendre."], juste: 0,
+      explication: "C'est tout l'intérêt des hourds : en surplomb, ils permettent de frapper le pied du mur, l'angle mort des créneaux. Pierres, poutres, eau bouillante parfois tombent par les assommoirs. Au XIVe et au XVe siècle, on remplacera peu à peu ces galeries de bois, fragiles et faciles à incendier, par des mâchicoulis de pierre." },
+    { q: "Des archers ennemis tirent depuis la lisière du bois, à une centaine de mètres. Comment riposter en restant protégé ?",
+      choix: ["Je me penche au-dessus du plancher des hourds pour mieux viser.", "Je tire par les fentes de tir de la paroi des hourds ou entre les merlons, puis je m'abrite.", "J'allume un grand feu pour les aveugler avec la fumée."], juste: 1,
+      explication: "Les fentes de tir (archères) et les créneaux permettent de viser au loin en exposant le moins possible le corps. Les merlons, ces dents de pierre entre les créneaux, protègent le défenseur pendant qu'il recharge son arbalète." },
+    { q: "Les ennemis ont mis le feu à des fagots : des flèches enflammées se plantent dans la paroi des hourds. Quel est le danger ?",
+      choix: ["Aucun : le bois des hourds ne brûle pas.", "Les hourds sont en bois : on les arrose et on les couvre de peaux fraîches ou mouillées pour qu'ils ne prennent pas feu.", "Il faut vite retirer le toit pour que la fumée s'échappe."], juste: 1,
+      explication: "C'est le point faible des hourds : ils brûlent. On les protégeait avec des peaux de bêtes fraîchement écorchées ou mouillées, et l'on gardait de l'eau à portée de main. C'est une des raisons pour lesquelles on a fini par construire des mâchicoulis en pierre." },
+  ],
+  fin: "La troupe se replie : la tour a tenu. Comme les défenseurs d'Oricourt, tu as utilisé chaque partie de la fortification à bon escient.",
 };
