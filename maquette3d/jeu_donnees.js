@@ -264,6 +264,21 @@ export const ROUTINES = {
     { lieu: 'tour_maitresse', fond: 'guetter', gestes: ['s_etirer', 'souffler'], periode: [6, 10], duree: [14, 22] },
     { lieu: 'ronde_porte', fond: 'guetter', gestes: ['guetter'], periode: [5, 9], duree: [18, 26] },
     { lieu: 'hourds_maitresse', fond: 'guetter', gestes: ['guetter', 's_etirer'], periode: [5, 9], duree: [24, 34] }] },
+  // le hameau : une paysanne va d'une maison à l'autre, un paysan travaille sa pièce de terre, deux enfants courent
+  paysanne: { trajet: 'marcher', chemins: true, postes: [
+    { lieu: 'maison:0:devant', fond: 'attendre', gestes: ['ranger', 'ramasser'], periode: [4, 8], duree: [14, 22] },
+    { lieu: 'maison:1:devant', trajet: 'porter', porte: true, fond: 'attendre', gestes: ['ranger'], periode: [4, 8], duree: [12, 18] }] },
+  paysan: { trajet: 'marcher', chemins: true, postes: [
+    { lieu: 'maison:2:champ', fond: 'attendre', gestes: ['travailler', 'travailler', 's_etirer'], periode: [2.5, 5], duree: [30, 45] },
+    { lieu: 'maison:2:devant', fond: 'attendre', gestes: ['s_etirer'], periode: [5, 9], duree: [8, 14] }] },
+  enfant1: { trajet: 'courir', chemins: true, postes: [
+    { lieu: 'maison:3:devant', fond: 'attendre', gestes: ['saluer'], periode: [3, 6], duree: [5, 9] },
+    { lieu: 'maison:3:jeu', fond: 'attendre', gestes: [], periode: [9, 9], duree: [3, 6] },
+    { lieu: 'maison:4:devant', fond: 'attendre', gestes: ['saluer'], periode: [3, 6], duree: [4, 8] }] },
+  enfant2: { trajet: 'courir', chemins: true, postes: [
+    { lieu: 'maison:3:jeu', fond: 'attendre', gestes: [], periode: [9, 9], duree: [4, 7] },
+    { lieu: 'maison:4:devant', fond: 'attendre', gestes: ['saluer'], periode: [3, 6], duree: [3, 6] },
+    { lieu: 'maison:3:devant', fond: 'attendre', gestes: [], periode: [9, 9], duree: [5, 8] }] },
   jardinier: { trajet: 'marcher', postes: [
     { a: 'base', fond: 'attendre', gestes: ['recolter', 'recolter', 'souffler'], periode: [1.5, 4], duree: [20, 30] },
     { a: [2.5, 1], fond: 'attendre', gestes: ['recolter'], periode: [1.5, 4], duree: [15, 20] }] },
@@ -310,7 +325,7 @@ export const EXPERTISES = [
     texte: "La faucille sert à moissonner les céréales, poignée par poignée. La faux, plus grande, sert surtout à couper l'herbe des prés pour faire le foin." },
 ];
 // Barème du tableau d'honneur
-export const BAREME = { sceau: 100, premierCoup: 50, ecoute: 10, tresor: 75, expertise: 40, lieu: 15, oeuvre: 60, defense: 25 };
+export const BAREME = { sceau: 100, premierCoup: 50, ecoute: 10, tresor: 75, expertise: 40, lieu: 15, oeuvre: 60, defense: 25, jardin: 40 };
 export const RANGS = [[0.9, "Maître chroniqueur d'Oricourt"], [0.7, 'Chevalier du savoir'], [0.5, 'Écuyer curieux'], [0.3, 'Page attentif'], [0, 'Voyageur égaré']];
 
 // ---- l'œuvre du chevalet de la chapelle : un petit cours (touche E près du chevalet)
@@ -356,4 +371,44 @@ export const DEFENSE = {
       explication: "C'est le point faible des hourds : ils brûlent. On les protégeait avec des peaux de bêtes fraîchement écorchées ou mouillées, et l'on gardait de l'eau à portée de main. C'est une des raisons pour lesquelles on a fini par construire des mâchicoulis en pierre." },
   ],
   fin: "La troupe se replie : la tour a tenu. Comme les défenseurs d'Oricourt, tu as utilisé chaque partie de la fortification à bon escient.",
+};
+
+// ---- le hameau : habitants et bêtes, placés au pied des masures (k : rang de la maison, quoi : devant, cour, jeu, champ)
+export const FIGURANTS_HAMEAU = [
+  { id: 'paysanne', modele: 'porteuse', ancre: 'maison:0:devant', studio: { sexe: 'F' }, activite: { fond: 'attendre', gestes: ['ranger'], periode: [5, 9] } },
+  { id: 'paysan', modele: 'jardinier', ancre: 'maison:2:champ', studio: { sexe: 'M' }, activite: { fond: 'attendre', gestes: ['travailler'], periode: [3, 6] } },
+  { id: 'enfant1', modele: 'porteuse', echelle: 0.62, sansOutil: true, ancre: 'maison:3:devant', studio: { sexe: 'F' }, activite: { fond: 'attendre', gestes: [], periode: [9, 9] } },
+  { id: 'enfant2', modele: 'palefrenier', echelle: 0.6, sansOutil: true, ancre: 'maison:3:jeu', studio: { sexe: 'M' }, activite: { fond: 'attendre', gestes: [], periode: [9, 9] } },
+];
+export const BETES_HAMEAU = [
+  ['poule', 'maison:0:cour', 3.5, 'grise'], ['poule', 'maison:0:cour', 3.5, 'rousse'], ['poule', 'maison:1:cour', 3, 'blanche'], ['poule', 'maison:5:cour', 3, 'noire'],
+  ['cochon', 'maison:1:cour', 3.5, 'noir'], ['chevre', 'maison:5:cour', 4, 'grise'], ['chien', 'maison:2:cour', 5, 'brun'], ['chat', 'maison:4:cour', 3, 'gris'],
+  ['vache', 'maison:6:cour', 5, 'froment'], ['mouton', 'maison:7:cour', 5, 'ecru'], ['mouton', 'maison:7:cour', 5, 'gris'],
+];
+
+// ---- le jardin des simples de la haute-cour : plantes, usages et une question (touche E au milieu du jardin)
+export const JARDIN = {
+  titre: 'Le jardin des simples',
+  plantes: [
+    { nom: 'Sauge', forme: 'touffe', teinte: 0x8a9a7a, usage: "Son nom vient du latin salvare, « sauver ». On la prend contre la toux, les maux de gorge et pour bien digérer." },
+    { nom: 'Menthe', forme: 'tapis', teinte: 0x4f8f3e, usage: "Elle aide à digérer et rafraîchit l'haleine ; on la met aussi dans les sauces." },
+    { nom: 'Rue', forme: 'plume', teinte: 0x7a9670, usage: "Réputée chasser les vers et les maladies. Elle est toxique à forte dose : le remède peut devenir poison." },
+    { nom: 'Hysope', forme: 'epis', teinte: 0x3f6a3a, fleur: 0x5a5ac8, usage: "Contre la toux et les rhumes, souvent en tisane avec du miel." },
+    { nom: 'Souci', forme: 'fleurs', teinte: 0x5f8a44, fleur: 0xf09a20, usage: "Ses fleurs orange, broyées en onguent, soignent plaies et brûlures. Elles colorent aussi le beurre et le fromage." },
+    { nom: 'Camomille', forme: 'fleurs', teinte: 0x7a9a5a, fleur: 0xf4f2e4, usage: "Elle calme les maux de ventre et aide à dormir." },
+    { nom: 'Poireaux et ail', forme: 'tiges', teinte: 0x5f7f4a, usage: "Pour la soupe de tous les jours ; l'ail passe aussi pour un remède contre les vers et les morsures." },
+    { nom: 'Choux', forme: 'choux', teinte: 0x6e9468, usage: "Le légume de base, qui se garde et nourrit ; ses feuilles posées sur une plaie la nettoient." },
+  ],
+  lecon: [
+    ['Un jardin dans l’enceinte', "Dans la haute-cour, ce petit carré clos de plessis fournit des légumes, des herbes pour la cuisine et des remèdes. En cas de siège, la haute-cour doit tenir seule : avec le puits, le four et les réserves de grain, ce jardin donne un appoint de nourriture fraîche et de quoi soigner blessés et malades sans sortir des murs."],
+    ['Que sont les « simples » ?', "Ce sont les plantes médicinales employées seules, « simplement », sans mélange savant. Ce savoir se transmet par l'usage, par les moines qui cultivent les jardins des monastères et par les livres d'herbes copiés à la main. Vers l'an 800 déjà, le capitulaire De Villis de Charlemagne énumérait près de quatre-vingt-dix plantes à cultiver dans les domaines."],
+    ['Attention !', "Ces usages sont ceux du Moyen Âge : certains sont confirmés, d'autres non, et plusieurs plantes sont dangereuses à forte dose. On regarde, on sent, mais on ne joue pas au médecin."],
+  ],
+  quiz: {
+    question: 'Pourquoi cultiver ce jardin à l’intérieur même de la haute-cour ?',
+    choix: ['Pour avoir sous la main de quoi manger et se soigner, même pendant un siège.', 'Parce que la terre de la haute-cour est la plus fertile du domaine.', 'Pour décorer la cour et impressionner les visiteurs.'],
+    juste: 0,
+    bravo: 'Oui : à l’abri des murs, ce jardin complète le puits et les réserves. En cas de siège, chaque ressource intérieure compte.',
+    rate: 'Non : la vraie raison est la sécurité. À l’abri des murs, le jardin nourrit et soigne même quand l’ennemi tient la campagne.',
+  },
 };

@@ -7,6 +7,8 @@ Maquette du château d'Oricourt à l'échelle réelle, tirée du relevé LiDAR H
   - le soleil suit une journée d'automne (lever vers 7 h, coucher vers 18 h 30) ; la journée dure une heure réelle, la nuit 22 minutes ;
   - le bouton ☀ passe au matin, à midi, au soir ou à la nuit ; un clic droit le met en pause ;
   - le bouton 🔔 coupe ou rétablit les sons. Ils sont tous synthétisés dans le navigateur, sans fichier : vent (plus fort en hauteur), forge, poules, pigeons, oiseaux le jour, grillons la nuit, torches, cloche de la chapelle qui sonne les heures, cor du guet quand on franchit la herse.
+  - de jour, une volée d'oies sauvages en V ou une ligne de canards traverse le ciel toutes les deux à quatre minutes ; un faucon crécerelle tournoie au-dessus du château. Chacun a son cri ;
+  - la prairie varie : herbe grasse ou sèche par plaques, trèfle, petites fleurs ; les arbres ont des feuilles plus petites et plus nombreuses.
 - **Commandes** : ZQSD ou les flèches pour marcher, la souris pour regarder, Espace pour sauter, E pour parler ou regarder un objet. Sur une carte (le tableau de la chapelle, par exemple), la molette, les flèches ou Page suivante font défiler. Dans un dialogue, les touches 1 à 9 choisissent une réplique et Échap fait partir.
 - **Sources** :
   - relevé IGN (LiDAR HD, BD TOPO, BD ORTHO), sous licence ouverte Etalab 2.0, avec la mention « IGN » ;
@@ -34,3 +36,6 @@ Maquette du château d'Oricourt à l'échelle réelle, tirée du relevé LiDAR H
   - **façade photographique** du logis : retirée en 1435 ;
   - **chapelle, mobilier** : ex-voto de cire (membres, têtes, cœurs) et petits tableaux votifs peints, dessinés pour la maquette ; parement d'autel et dossal brodés ;
   - **village et jardin** : hameau de masures à pans de bois et chaume ; grand potager clos de plessis autour du colombier (environ 20 × 22 m).
+  - **jardin des simples** dans la haute-cour (environ 7 × 7 m) : quatre carrés surélevés bordés de plessis, huit plantes étiquetées (sauge, menthe, rue, hysope, souci, camomille, poireaux et ail, choux). Il sert de réserve de légumes et de remèdes en cas de siège ; la touche E y ouvre une leçon et une question (+40 XP) ;
+  - **basse-cour en terre battue**, retournée par les bêtes et les passages, avec de la paille éparse et quelques flaques ;
+  - **hameau habité** : une paysanne, un paysan à sa pièce de terre labourée, deux enfants qui courent, et des bêtes au pied des masures (poules, cochon, chèvre, chien, chat, vache, moutons).

@@ -97,6 +97,14 @@ export function creerAmbiance(o) {
     cor(t, g, s) { for (const [f, t0, d] of [[196, 0, 0.9], [262, 0.95, 1.5]]) { const c = SONS.ctx, o2 = c.createOscillator(), fi = c.createBiquadFilter(), e = c.createGain();
       o2.type = 'sawtooth'; o2.frequency.value = f; fi.type = 'lowpass'; fi.frequency.value = 900; e.gain.setValueAtTime(0.0001, t + t0); e.gain.exponentialRampToValueAtTime(g * 0.16, t + t0 + 0.12);
       e.gain.setValueAtTime(g * 0.16, t + t0 + d - 0.2); e.gain.exponentialRampToValueAtTime(0.0001, t + t0 + d); o2.connect(fi).connect(e).connect(s); o2.start(t + t0); o2.stop(t + t0 + d + 0.05); } },
+    oie(t, g, s) { const n = 1 + Math.floor(Math.random() * 3); for (let i = 0; i < n; i++) { const c = SONS.ctx, o2 = c.createOscillator(), fi = c.createBiquadFilter(), e = c.createGain(), t0 = t + i * (0.28 + Math.random() * 0.2), f = 330 + Math.random() * 90;
+      o2.type = 'sawtooth'; o2.frequency.setValueAtTime(f, t0); o2.frequency.exponentialRampToValueAtTime(f * 1.25, t0 + 0.05); o2.frequency.exponentialRampToValueAtTime(f * 0.92, t0 + 0.2);
+      fi.type = 'bandpass'; fi.frequency.value = 1100; fi.Q.value = 1.4; e.gain.setValueAtTime(0.0001, t0); e.gain.exponentialRampToValueAtTime(g * 0.2, t0 + 0.03); e.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.22);
+      o2.connect(fi).connect(e).connect(s); o2.start(t0); o2.stop(t0 + 0.25); } },
+    canard(t, g, s) { const n = 2 + Math.floor(Math.random() * 3); for (let i = 0; i < n; i++) { const c = SONS.ctx, o2 = c.createOscillator(), fi = c.createBiquadFilter(), e = c.createGain(), t0 = t + i * 0.2;
+      o2.type = 'square'; o2.frequency.setValueAtTime(260, t0); o2.frequency.exponentialRampToValueAtTime(200, t0 + 0.15); fi.type = 'bandpass'; fi.frequency.value = 900; fi.Q.value = 2;
+      e.gain.setValueAtTime(0.0001, t0); e.gain.exponentialRampToValueAtTime(g * 0.12, t0 + 0.02); e.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.16); o2.connect(fi).connect(e).connect(s); o2.start(t0); o2.stop(t0 + 0.2); } },
+    faucon(t, g, s) { const n = 3 + Math.floor(Math.random() * 4); for (let i = 0; i < n; i++) osc('triangle', 2300, t + i * 0.13, 0.09, g * 0.07, s, 1900); },
     crepitement(t, g, s) { for (let i = 0; i < 4; i++) bruitBref(t + Math.random() * 0.4, 0.02 + Math.random() * 0.04, g * 0.12, 'highpass', 1800, s); },
   };
   function jouer(recette, g) { if (!SONS.ctx || g < 0.01) return; RECETTES[recette](SONS.ctx.currentTime + 0.02, Math.min(1, g), SONS.maitre); }
@@ -151,13 +159,18 @@ export function creerAmbiance(o) {
 
   // ------------------------------------------------------------------ oiseaux : pigeons autour du colombier, choucas autour des tours
   const VOLEES = [];
-  function oiseaux(groupe, centre, z, rayon, n, couleur, taille = 1) {
-    const mat = new THREE.MeshStandardMaterial({ color: couleur, roughness: 0.9, side: THREE.DoubleSide });
+  /** Un oiseau stylisé : corps en fuseau, deux ailes triangulaires (envergure ≈ 0,7 × taille), cou éventuel. */
+  function unOiseau(mat, taille, cou = 0) {
     const corps = new THREE.ConeGeometry(0.07 * taille, 0.32 * taille, 5).rotateX(Math.PI / 2);
     const aile = new THREE.BufferGeometry(); aile.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, -0.08 * taille, 0, 0, 0.1 * taille, 0.34 * taille, 0, 0.02 * taille], 3)); aile.computeVertexNormals();
+    const g = new THREE.Group(), c = new THREE.Mesh(corps, mat), aG = new THREE.Mesh(aile, mat), aD = new THREE.Mesh(aile, mat); aD.scale.x = -1; g.add(c, aG, aD);
+    if (cou) { const n = new THREE.Mesh(new THREE.CylinderGeometry(0.02 * taille, 0.03 * taille, cou * taille).rotateX(Math.PI / 2), mat); n.position.z = -(0.16 * taille + cou * taille / 2);   /* le cou tendu, en avant : le corps vole base en avant */ g.add(n); }
+    return { g, aG, aD };
+  }
+  function oiseaux(groupe, centre, z, rayon, n, couleur, taille = 1) {
+    const mat = new THREE.MeshStandardMaterial({ color: couleur, roughness: 0.9, side: THREE.DoubleSide });
     for (let i = 0; i < n; i++) {
-      const g = new THREE.Group(), c = new THREE.Mesh(corps, mat), aG = new THREE.Mesh(aile, mat), aD = new THREE.Mesh(aile, mat); aD.scale.x = -1;
-      g.add(c, aG, aD); groupe.add(g);
+      const { g, aG, aD } = unOiseau(mat, taille); groupe.add(g);
       VOLEES.push({ g, aG, aD, centre, z: z + (Math.random() - 0.5) * 4, r: rayon * (0.6 + Math.random() * 0.6), w: (0.35 + Math.random() * 0.25) * (Math.random() < 0.5 ? 1 : -1), ph: Math.random() * 6.28, groupe });
     }
   }
@@ -170,6 +183,53 @@ export function creerAmbiance(o) {
       const battre = Math.sin(temps * 16 + B.ph * 3) * 0.7 * (0.5 + 0.5 * Math.sin(temps * 0.5 + B.ph) > 0.3 ? 1 : 0.15);
       B.aG.rotation.z = battre; B.aD.rotation.z = -battre;
     }
+  }
+
+  // ------------------------------------------------------------------ passages : oies sauvages en V, canards en ligne, faucon qui tournoie
+  // De jour, toutes les deux à quatre minutes, une volée traverse le ciel en ligne droite ; un faucon crécerelle plane au-dessus du château.
+  const PASSAGES = { groupe: null, centre: [0, 0], vol: null, prochain: 40 + Math.random() * 50, faucon: null, cri: 20 };
+  function passages(groupe, centre) {
+    PASSAGES.groupe = groupe; PASSAGES.centre = centre;
+    const mf = new THREE.MeshStandardMaterial({ color: 0x6a5a48, roughness: 0.9, side: THREE.DoubleSide });
+    const f = unOiseau(mf, 2.4); groupe.add(f.g); PASSAGES.faucon = { ...f, a: Math.random() * 6.28, r: 38, z: 52 };
+  }
+  function lancerVol() {
+    const P = PASSAGES, oies = Math.random() < 0.6, n = oies ? 7 + Math.floor(Math.random() * 6) : 5 + Math.floor(Math.random() * 4);
+    const mat = new THREE.MeshStandardMaterial({ color: oies ? 0x5e574e : 0x4a4436, roughness: 0.9, side: THREE.DoubleSide });
+    const cap = Math.random() * 6.28, d = [Math.cos(cap), Math.sin(cap)], q = [-d[1], d[0]], dec = (Math.random() - 0.5) * 120;
+    const depart = [P.centre[0] - d[0] * 600 + q[0] * dec, P.centre[1] - d[1] * 600 + q[1] * dec], g = new THREE.Group(), membres = [];
+    for (let k = 0; k < n; k++) {
+      const o = unOiseau(mat, oies ? 4.4 : 2.8, oies ? 0.22 : 0.1); g.add(o.g);
+      const rang = Math.ceil(k / 2), cote = k % 2 ? 1 : -1;
+      const off = oies ? [-rang * 2.6, rang * 2.1 * cote] : [-k * 2.2 + (Math.random() - 0.5), (Math.random() - 0.5) * 1.6];   // [recul, écart]
+      membres.push({ ...o, off, ph: Math.random() * 6.28, dz: (Math.random() - 0.5) * 0.6 });
+    }
+    P.groupe.add(g);
+    P.vol = { g, membres, oies, d, q, depart, s: 0, v: oies ? 15 : 19, z: 45 + Math.random() * 30, crie: 1 };
+  }
+  function majPassages(dt, temps, ecoute) {
+    const P = PASSAGES; if (!P.groupe) return;
+    const jour = A.heure > 6.5 && A.heure < 19.5, visible = P.groupe.visible;
+    // le faucon : il plane en larges cercles, bat des ailes de temps à autre, et crie
+    if (P.faucon) {
+      const F = P.faucon; F.g.visible = jour; F.a += dt * 0.16;
+      const x = P.centre[0] + Math.cos(F.a) * F.r, y = P.centre[1] + Math.sin(F.a) * F.r * 0.85, z = F.z + Math.sin(temps * 0.21) * 6;
+      F.g.position.copy(V(x, y, z)); F.g.rotation.order = 'YXZ'; F.g.rotation.y = Math.atan2(-Math.sin(F.a), -Math.cos(F.a) * 0.85) + Math.PI; F.g.rotation.z = 0.35;
+      const bat = Math.sin(temps * 0.4) > 0.75 ? Math.sin(temps * 13) * 0.6 : 0.12; F.aG.rotation.z = bat; F.aD.rotation.z = -bat;
+      P.cri -= dt; if (P.cri < 0) { P.cri = 18 + Math.random() * 30; if (jour && visible) jouer('faucon', 0.25 + 0.5 * borne(1 - Math.hypot(x - ecoute[0], y - ecoute[1], z - ecoute[2]) / 140, 0, 1)); }
+    }
+    // les volées de passage
+    if (!P.vol) { P.prochain -= dt; if (P.prochain < 0) { P.prochain = 120 + Math.random() * 120; if (jour) lancerVol(); } return; }
+    const W = P.vol; W.s += dt * W.v;
+    const tete = [W.depart[0] + W.d[0] * W.s, W.depart[1] + W.d[1] * W.s];
+    for (const M of W.membres) {
+      const x = tete[0] + W.d[0] * M.off[0] + W.q[0] * M.off[1], y = tete[1] + W.d[1] * M.off[0] + W.q[1] * M.off[1];
+      M.g.position.copy(V(x, y, W.z + M.dz + Math.sin(temps * 0.8 + M.ph) * 0.4)); M.g.rotation.y = Math.atan2(W.d[0], -W.d[1]) + Math.PI;
+      const bat = Math.sin(temps * (W.oies ? 5.5 : 9) + M.ph) * (W.oies ? 0.55 : 0.7); M.aG.rotation.z = bat; M.aD.rotation.z = -bat;
+    }
+    const dist = Math.hypot(tete[0] - ecoute[0], tete[1] - ecoute[1], W.z - ecoute[2]);
+    W.crie -= dt; if (W.crie < 0 && visible) { W.crie = W.oies ? 0.8 + Math.random() * 1.6 : 1.5 + Math.random() * 2.5; jouer(W.oies ? 'oie' : 'canard', borne(1 - dist / 260, 0, 1) ** 1.5); }
+    if (W.s > 1200) { P.groupe.remove(W.g); W.g.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); P.vol = null; }
   }
 
   // ------------------------------------------------------------------ brume de vallée (matin, soir et nuit)
@@ -207,12 +267,12 @@ export function creerAmbiance(o) {
     temps += dt;
     if (!A.pause) { A.heure += dt * heuresParSeconde(A.heure); if (A.heure >= 24) A.heure -= 24; }
     const ecl = lumiere();
-    majFumees(dt, temps); majOiseaux(temps); majBrume(dt, temps, ecl);
+    majFumees(dt, temps); majOiseaux(temps); majPassages(dt, temps, ecoute || [0, 0, 0]); majBrume(dt, temps, ecl);
     sons(dt, ecoute, passe, hauteur);
     return ecl;
   }
   return {
-    A, maj, fumee, oiseaux, brume, reveiller, jouer, SONS,
+    A, maj, fumee, oiseaux, passages, brume, reveiller, jouer, SONS, PASSAGES, lancerVol,
     regler(h) { A.heure = ((h % 24) + 24) % 24; },
     basculerSons() { SONS.voulu = !SONS.voulu; try { localStorage.setItem('oricourt_sons', SONS.voulu ? 'oui' : 'non'); } catch (e) { /* rien */ } if (SONS.voulu) reveiller(); return SONS.voulu; },
   };

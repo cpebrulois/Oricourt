@@ -317,6 +317,7 @@ const MESHY_INTENTIONS = {
   porter: ['Carry_Water_Bucket_Walk', 'Carry_Heavy_Object_Walk', 'Walking_Woman', 'Walking'],
   forger: ['Heavy_Hammer_Swing'], fendre: ['Heavy_Hammer_Swing'], travailler: ['Heavy_Hammer_Swing', 'Female_Stand_Pick_Fruit_Basket'],
   ramasser: ['Female_Stand_Pick_Fruit_Basket'], recolter: ['Female_Stand_Pick_Fruit_Basket'],
+  courir: ['Running', 'Walking'],
 };
 // allures (m/s) des cycles sur place, mesurées sur le rythme des pas ; les clips qui avancent (seau, charge, vieillard)
 // gardent leur propre avance, accélérée d'un tempo, et ne glissent pas.
@@ -435,11 +436,11 @@ async function habillerMeshy(id) {
   const g = await glb('meshy/' + id + '.glb');
   // un même modèle peut habiller deux figurants (deux porteuses, deux gardes) : le second reçoit une copie articulée,
   // aux étoffes un peu plus sombres pour qu'on ne croie pas voir un jumeau
-  const copie = !!g.servi; g.servi = true;
+  const copie = !!g.servi, nCopie = g.servi || 0; g.servi = nCopie + 1;
   const racine = copie ? clonerArticule(g.scene) : g.scene, os = new Map(), maillages = [];
   racine.traverse((o) => {
     if (o.isBone) os.set(o.name.replace(/^mixamorig:?/, ''), o);
-    if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; maillages.push(o); if (copie && o.material) { o.material = o.material.clone(); o.material.color.offsetHSL(0.04, -0.08, -0.1); } }
+    if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; maillages.push(o); if (copie && o.material) { o.material = o.material.clone(); o.material.color.offsetHSL([0.04, -0.05, 0.09, -0.1][nCopie % 4], -0.08, [-0.1, 0.02, -0.05, 0.04][nCopie % 4]); } }
   });
   const boite = new THREE.Box3().setFromObject(racine);
   const corps = { id: 'meshy_' + id, taille_m: boite.max.y - boite.min.y, hanches_pos: os.get('Hips') ? os.get('Hips').position.toArray() : [0, 1, 0] };
@@ -478,7 +479,8 @@ export async function chargerVivants(ctx) {
       const m = h.meshy ? await habillerMeshy(h.meshy) : await hab.habiller(h.desc);
       h.objet.add(m.racine);
       const H = new Habitant(m, m.mvt || mvt, h.act, hache(h.id));
-      if (h.meshy) { H.meshy = true; H.outils = outillerMeshy(m, h.meshy); }
+      if (h.echelle) m.racine.scale.multiplyScalar(h.echelle);   // les enfants du hameau
+      if (h.meshy) { H.meshy = true; H.outils = h.sansOutil ? [] : outillerMeshy(m, h.meshy); }
       H.id = h.id; H.objet = h.objet; H.sol = ctx.sol; H.etage = ctx.etage || null; H.z = null;
       if (h.routine && h.routine.postes.length) {
         H.routine = { ...h.routine, i: 0, etat: 'poste', t: 2 + Math.random() * 6 };

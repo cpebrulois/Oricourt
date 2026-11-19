@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from './lib/OrbitControls.js';
 import { mergeGeometries } from './lib/BufferGeometryUtils.js';
-import { INTRO, FIN, PERSONNAGES, ANIMAUX, BETES, FIGURANTS, ROUTINES, MASURES, CENTRE_BROUILLARD, RAYON_BROUILLARD, DEPART, TRESORS, EXPERTISES, BAREME, RANGS, OEUVRE, DEFENSE } from './jeu_donnees.js';
+import { INTRO, FIN, PERSONNAGES, ANIMAUX, BETES, FIGURANTS, ROUTINES, MASURES, CENTRE_BROUILLARD, RAYON_BROUILLARD, DEPART, TRESORS, EXPERTISES, BAREME, RANGS, OEUVRE, DEFENSE, FIGURANTS_HAMEAU, BETES_HAMEAU, JARDIN as SIMPLES } from './jeu_donnees.js';
 import { fabriquer, etincelle } from './objets_jeu.js';
 import { chargerVivants } from './vivants.js';
 import { creerAmbiance, libelleHeure } from './ambiance.js';
@@ -324,12 +324,22 @@ function construireTerrain() {
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.carteTerre = { value: o8A || teA }; sh.uniforms.carteOrtho = { value: texOrtho };
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float terre;\nvarying float vTerre;')
-      .replace('#include <uv_vertex>', '#include <uv_vertex>\nvTerre = terre;');
+      .replace('#include <common>', '#include <common>\nattribute float terre;\nvarying float vTerre;\nvarying vec2 vPlan;')
+      .replace('#include <uv_vertex>', '#include <uv_vertex>\nvTerre = terre; vPlan = uv;');
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform sampler2D carteTerre, carteOrtho;\nvarying float vTerre;')
+      .replace('#include <common>', '#include <common>\nuniform sampler2D carteTerre, carteOrtho;\nvarying float vTerre;\nvarying vec2 vPlan;' + GLSL_BRUIT)
       .replace('#include <map_fragment>', `
         vec4 cHerbe = texture2D( map, vMapUv );
+        // prairie variée : deux échelles de texture contre la répétition, herbe grasse ou sèche par plaques, trèfle, fleurettes
+        float nA = fbm(vPlan * 0.045), nB = fbm(vPlan * 0.17 + 17.0);
+        cHerbe = mix(cHerbe, texture2D( map, vMapUv * 0.37 + 0.21 ), smoothstep(0.35, 0.65, nB) * 0.7);
+        vec3 nuance = mix(vec3(0.84, 0.97, 0.70), vec3(1.13, 1.04, 0.74), smoothstep(0.42, 0.72, nA));
+        nuance = mix(nuance, vec3(0.74, 0.93, 0.58), smoothstep(0.58, 0.78, nB) * 0.55);
+        cHerbe.rgb *= nuance;
+        vec2 gf = vPlan * 4.0, cf = floor(gf), of = vec2(hsh(cf + 1.0), hsh(cf + 2.0)) * 0.6 + 0.2;
+        float fl = step(0.9, hsh(cf)) * smoothstep(0.42, 0.62, nB) * smoothstep(0.13, 0.07, length(fract(gf) - of)) * (1.0 - smoothstep(0.08, 0.3, fwidth(gf.x)));
+        float hf = hsh(cf + 3.0); vec3 cFl = hf < 0.5 ? vec3(0.95, 0.94, 0.86) : hf < 0.8 ? vec3(0.95, 0.78, 0.18) : vec3(0.62, 0.45, 0.78);
+        cHerbe.rgb = mix(cHerbe.rgb, cFl * 0.8, fl * 0.85 * (1.0 - smoothstep(0.1, 0.5, vTerre)));
         vec4 cTerre = texture2D( carteTerre, vMapUv * 0.667 ) * vec4(1.1, 1.06, 1.0, 1.0);
         diffuseColor *= mix( cHerbe, cTerre, smoothstep(0.15, 0.85, vTerre) );
         vec2 plan = vMapUv * 2.0;
@@ -1730,10 +1740,11 @@ function construireArbres() {
       m4.compose(centre, q.identity(), new THREE.Vector3(r * 0.62, rv * 0.68, r * 0.62)); ic.setMatrixAt(k, m4);
       const essence = R() < 0.5 ? [0, 0] : (R() < 0.6 ? [1, 3] : [2, 3]);     // chêne, ou hêtre/charme
       const vert = [0.62 + 0.3 * R(), 0.80 + 0.2 * R(), 0.50 + 0.25 * R()];
-      const nb = Math.round(clamp((lot === 'proche' ? 3.6 : 1.6) * r * r * 0.9 + 9, 12, lot === 'proche' ? 64 : 22));
-      const taille = clamp(r * (lot === 'proche' ? 0.5 : 0.8), 1.0, 3.4);
+      // beaucoup de petits rameaux plutôt que quelques grandes cartes : des feuilles à la bonne échelle
+      const nb = Math.round(clamp((lot === 'proche' ? 22 : 7) * r * r + 30, 40, lot === 'proche' ? 420 : 110));
+      const taille = clamp(r * (lot === 'proche' ? 0.13 : 0.22), lot === 'proche' ? 0.32 : 0.5, lot === 'proche' ? 0.62 : 1.1);
       for (let i = 0; i < nb; i++) {
-        const th = R() * 6.283, cz = R() * 1.7 - 0.7, sr = Math.sqrt(Math.max(0, 1 - Math.min(1, cz * cz))), f = 0.72 + 0.3 * R();
+        const th = R() * 6.283, cz = R() * 1.7 - 0.7, sr = Math.sqrt(Math.max(0, 1 - Math.min(1, cz * cz))), f = 0.5 + 0.52 * Math.sqrt(R());
         d.set(Math.cos(th) * sr, cz > 1 ? 1 : cz, Math.sin(th) * sr).normalize();
         const p = centre.clone().add(new THREE.Vector3(d.x * r * f, d.y * rv * f, d.z * r * f));
         ax.set(R() - 0.5, (R() - 0.5) * 0.7, R() - 0.5).normalize(); ay.crossVectors(d, ax).lerp(new THREE.Vector3(R() - 0.5, R() - 0.5, R() - 0.5), 0.5).normalize();
@@ -1751,12 +1762,13 @@ function construireArbres() {
 construireArbres();
 
 // herbes hautes et fleurs (fossés, talus, pieds de murs), lierre sur les maçonneries
+const BASSE_COUR = [[14, -28], [20, -18], [26, -13], [30, -3], [36, -3], [49, -10], [56, -22], [56, -38], [46, -55], [40, -56], [36, -53], [24, -43], [13, -34]];
 function construireHerbes() {
-  const R = aleaGraine(1435), cartes = new Cartes(), up = new THREE.Vector3(0, 1, 0);
+  const R = aleaGraine(1435), cartes = new Cartes(), cartesBC = new Cartes(), up = new THREE.Vector3(0, 1, 0);
   const cour = [[-24, 21], [-25, 8], [-23, -12], [-18, -20], [3, -30], [12, -26], [16, -20], [12, -7], [8, 8], [-2, 15]];
   let pose = 0;
-  for (let k = 0; k < 60000 && pose < 6000; k++) {
-    const a = R() * 6.283, rr = Math.sqrt(R()) * 95, x = 2 + Math.cos(a) * rr, y = -8 + Math.sin(a) * rr;
+  for (let k = 0; k < 160000 && pose < 15000; k++) {
+    const a = R() * 6.283, rr = Math.sqrt(R()) * 118, x = 2 + Math.cos(a) * rr, y = -8 + Math.sin(a) * rr;
     if (Math.abs(x) > HALF - 2 || Math.abs(y) > HALF - 2) continue;
     const i = Math.round(x + HALF), j = Math.round(HALF - y);
     if (terre8[j * N + i] > 60) continue;
@@ -1768,13 +1780,15 @@ function construireHerbes() {
     const z = hauteurTerrain(x, y), t = R(), cell = CELL_HERBES[t < 0.3 ? 0 : t < 0.55 ? 1 : t < 0.72 ? 2 : t < 0.86 ? 3 : t < 0.93 ? 4 : 5];
     const hh = (dansCour ? 0.3 : 0.45) + R() * 0.5, asp = (cell[2] - cell[0]) / (cell[3] - cell[1]) , th = R() * 3.14;
     const v = 0.8 + 0.3 * R(), teinte = [v * 0.95, v, v * 0.8];
+    const dest = dedansPoly(x, y, BASSE_COUR) ? cartesBC : cartes;   // aujourd'hui seulement dans la basse-cour
     for (const dth of [0, 1.57]) {
       const ax = new THREE.Vector3(Math.cos(th + dth), 0, Math.sin(th + dth)).multiplyScalar(hh * asp / 2 * 1.3);
-      cartes.quad(V(x, y, z + hh / 2 * 1.3 - 0.06), ax, new THREE.Vector3(0, hh / 2 * 1.3, 0), cell, up, teinte);
+      dest.quad(V(x, y, z + hh / 2 * 1.3 - 0.06), ax, new THREE.Vector3(0, hh / 2 * 1.3, 0), cell, up, teinte);
     }
     pose++;
   }
   const m = cartes.maillage(matHerbes); m.receiveShadow = true; G.commun.add(m);
+  const mb = cartesBC.maillage(matHerbes); mb.receiveShadow = true; G.actuel.add(mb);
 }
 construireHerbes();
 // herbes hautes et orties au pied des courtines et des tours, des deux côtés, hors des chemins et des passages
@@ -1804,6 +1818,37 @@ function construireHerbesPied() {
   const m = cartes.maillage(matHerbes); m.receiveShadow = true; G.commun.add(m);
 }
 construireHerbesPied();
+// terre battue de la basse-cour en 1435 : poules et bêtes grattent et retournent le sol, charrois et travaux le tassent
+function construireTerreBattue() {
+  const h = (x, y) => { const s2 = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s2 - Math.floor(s2); };
+  const bv = (x, y) => { const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j, sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+    return (h(i, j) * (1 - sx) + h(i + 1, j) * sx) * (1 - sy) + (h(i, j + 1) * (1 - sx) + h(i + 1, j + 1) * sx) * sy; };
+  const fbmJ = (x, y) => 0.5 * bv(x, y) + 0.25 * bv(x * 2.1, y * 2.1) + 0.125 * bv(x * 4.3, y * 4.3);
+  const xs = BASSE_COUR.map((p) => p[0]), ys = BASSE_COUR.map((p) => p[1]), pas = 0.7;
+  const x0 = Math.min(...xs) - 2, x1 = Math.max(...xs) + 2, y0 = Math.min(...ys) - 2, y1 = Math.max(...ys) + 2, nx = Math.ceil((x1 - x0) / pas) + 1, ny = Math.ceil((y1 - y0) / pas) + 1;
+  const distBord = (x, y) => { let d = 1e9; for (let k = 0; k < BASSE_COUR.length; k++) { const a = BASSE_COUR[k], b = BASSE_COUR[(k + 1) % BASSE_COUR.length], vx = b[0] - a[0], vy = b[1] - a[1], t = clamp(((x - a[0]) * vx + (y - a[1]) * vy) / (vx * vx + vy * vy), 0, 1); d = Math.min(d, Math.hypot(x - a[0] - vx * t, y - a[1] - vy * t)); } return d; };
+  const pos = [], uv = [], col = [], idx = [];
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+    const x = x0 + i * pas, y = y0 + j * pas, w = V(x, y, hauteurTerrain(x, y) + 0.05);
+    pos.push(w.x, w.y, w.z); uv.push(x / 2.5, y / 2.5);
+    const dedans = dedansPoly(x, y, BASSE_COUR) ? 1 : 0, bord = dedans ? Math.min(1, distBord(x, y) / 2.5) : 0, n = fbmJ(x / 6, y / 6), n2 = fbmJ(x / 1.6 + 9, y / 1.6);
+    const a = bord * clamp(0.35 + (n - 0.42) * 2.6, 0, 1) * (0.75 + 0.25 * n2), v = 0.82 + 0.3 * n2;
+    col.push(v, v * 0.97, v * 0.92, a * 0.96);
+  }
+  for (let j = 0; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) { const a = j * nx + i, b = a + 1, c = a + nx, d = c + 1; idx.push(a, c, b, b, c, d); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setIndex(idx); g.computeVertexNormals();
+  const t = teA.clone(); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.needsUpdate = true;
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: t, normalMap: teN, vertexColors: true, transparent: true, depthWrite: false, roughness: 1, color: 0xc9b496, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }));
+  m.receiveShadow = true; m.renderOrder = 1; G.medieval.add(m);
+  // brins de paille et petites flaques
+  const paille = new THREE.InstancedMesh(new THREE.BoxGeometry(0.01, 0.006, 0.16), new THREE.MeshStandardMaterial({ color: 0xb09c62, roughness: 1 }), 900), mm = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
+  let k = 0; for (let tir = 0; tir < 5000 && k < 900; tir++) { const x = x0 + Math.random() * (x1 - x0), y = y0 + Math.random() * (y1 - y0); if (!dedansPoly(x, y, BASSE_COUR) || distBord(x, y) < 3) continue; e.set(0, Math.random() * 6.3, 0); q.setFromEuler(e); mm.compose(V(x, y, hauteurTerrain(x, y) + 0.06), q, new THREE.Vector3(1, 1, 1)); paille.setMatrixAt(k++, mm); }
+  paille.count = k; G.medieval.add(paille);
+  const flaque = new THREE.MeshStandardMaterial({ color: 0x5a5448, roughness: 0.08, metalness: 0.15, transparent: true, opacity: 0.85 });
+  for (let f = 0; f < 6; f++) { const x = 25 + Math.random() * 25, y = -45 + Math.random() * 30; if (!dedansPoly(x, y, BASSE_COUR)) continue; const fl = new THREE.Mesh(new THREE.CircleGeometry(0.5 + Math.random() * 0.7, 18).rotateX(-Math.PI / 2), flaque); fl.scale.set(1, 1, 0.6 + Math.random() * 0.4); fl.position.copy(V(x, y, hauteurTerrain(x, y) + 0.07)); G.medieval.add(fl); }
+}
+construireTerreBattue();
 function construireLierre() {
   const R = aleaGraine(1984), cartes = new Cartes();
   for (const w of data.murs) {
@@ -2297,11 +2342,13 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
     const eau = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.5).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x5d6e66, roughness: 0.15, metalness: 0.1 })); eau.position.y = 0.5; g.add(eau);
     g.position.copy(V(ABREUVOIR[0], ABREUVOIR[1], z)); g.rotation.y = 0.5; G.medieval.add(g);
     obstacles.push({ poly: [-1, 1].flatMap((sx) => [-1, 1].map((sy) => [ABREUVOIR[0] + sx * Math.cos(0.5) * 1.0 + sy * Math.sin(0.5) * 0.4, ABREUVOIR[1] - sx * Math.sin(0.5) * 1.0 + sy * Math.cos(0.5) * 0.4])).sort((p, q) => Math.atan2(p[1] - ABREUVOIR[1], p[0] - ABREUVOIR[0]) - Math.atan2(q[1] - ABREUVOIR[1], q[0] - ABREUVOIR[0])), village: false, medievalSeulement: true }); }
+  const pointMaison = (nom) => { const [, k, quoi] = nom.split(':'), M2 = MAISONS[(+k) % MAISONS.length]; return placeLibre(...M2[quoi]); };
   /** Lieux nommés des routines : [x, y], hauteur d'étage éventuelle, chemin imposé pour y entrer (escaliers, tourelle). */
   const rondeEntre = (id, s0, s1) => { const R = RONDES.find((q) => q.w.id === id); const L = R.int.filter((q) => (s0 < s1 ? q.s >= s0 && q.s <= s1 : q.s <= s0 && q.s >= s1)); if (s0 > s1) L.reverse(); return L.map((q) => [q.x, q.y]); };
   const rondeA = (id, s) => { const R = RONDES.find((q) => q.w.id === id); let best = R.int[0]; for (const q of R.int) if (Math.abs(q.s - s) < Math.abs(best.s - s)) best = q; return best; };
   function lieuRoutine(nom, base, s) {
     const ESC = RECON.escalier, salle = (role) => SALLES_TOURS.find((q) => q.role === role);
+    if (nom.startsWith('maison:')) return { xy: pointMaison(nom) };
     if (nom === 'puits') { const a = (s.angle || 0) * DEG + Math.atan2(base[1] - PUITS[1], base[0] - PUITS[0]); const r = s.rayon || 1.3; return { xy: placeLibre(PUITS[0] + Math.cos(a) * r, PUITS[1] + Math.sin(a) * r) }; }
     if (nom === 'cuisine') return { xy: placeLibre(...SALLE.centre) };
     if (nom === 'abreuvoir') return { xy: placeLibre(ABREUVOIR[0] - 0.9, ABREUVOIR[1] - 0.9), vers: ABREUVOIR };
@@ -2399,7 +2446,19 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
     if (k % 3 !== 1) { const t = m(new THREE.CylinderGeometry(0.3, 0.27, 0.8, 12), new THREE.MeshStandardMaterial({ map: M.bois.map, color: 0x8a6a48, roughness: 0.9 }), dx + (dx < 0 ? -0.95 : 0.95), so - 0.05, l / 2 + 0.55); t.position.y = hauteurTerrain(...coin(dx + (dx < 0 ? -0.95 : 0.95), l / 2 + 0.55)) - z0 + 0.4; }
     if (k % 2 === 0) { const zb = hauteurTerrain(...coin(fx, l / 2 + 0.45)) - z0; m(new THREE.BoxGeometry(1.3, 0.07, 0.3), M.bois, fx, zb + 0.45, l / 2 + 0.45); for (const sx of [-0.5, 0.5]) m(new THREE.BoxGeometry(0.07, 0.45, 0.25), M.bois, fx + sx, zb + 0.22, l / 2 + 0.45); }
     obstacles.push({ poly, village: false, medievalSeulement: true });
-    MAISONS.push({ x, y, poly, faite: z0 + hf });
+    MAISONS.push({ x, y, poly, faite: z0 + hf, devant: coin(dx, l / 2 + 1.7), cour: coin(-dx * 0.4, l / 2 + 4.5), jeu: coin(L / 2 + 3.5, l / 2 + 3), champ: coin(0, l / 2 + 8.5) });
+    if (k === 2) {   // pièce de terre labourée devant la maison du paysan : sillons modelés qui épousent la pente
+      const c = coin(0, l / 2 + 8.5), z0c = hauteurTerrain(...c), sillons = new THREE.Group(); sillons.position.copy(V(c[0], c[1], z0c)); G.vie.add(sillons);
+      const geo = new THREE.PlaneGeometry(6.5, 5, 40, 60).rotateX(-Math.PI / 2), pos = geo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {   // (a, b) : repère de la maison ; les sillons courent parallèlement à la façade
+        const a = pos.getX(i), b = pos.getZ(i), w = coin(a, l / 2 + 8.5 + b);
+        const bord = Math.min(3.25 - Math.abs(a), 2.5 - Math.abs(b)), relief = 0.09 * Math.max(0, Math.sin(b * Math.PI * 2 / 0.55)) ** 0.7 * Math.min(1, bord / 0.4);
+        pos.setXYZ(i, w[0] - c[0], hauteurTerrain(w[0], w[1]) - z0c + 0.03 + relief, -(w[1] - c[1]));
+      }
+      geo.computeVertexNormals();
+      const champ = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: teA, normalMap: teN, color: 0x8a7458, roughness: 1, polygonOffset: true, polygonOffsetFactor: -1 }));
+      champ.receiveShadow = true; sillons.add(champ);
+    }
     // linge qui sèche sur une corde, devant une maison sur trois
     if (k % 3 === 0) {
       const a = coin(-L / 2 - 0.4, l / 2 + 2.6), b2 = coin(L / 2 + 0.2, l / 2 + 2.6), za = hauteurTerrain(...a), zb = hauteurTerrain(...b2), lin = [0xe9e2d0, 0xb9a77e, 0x8a9aa8, 0xd8c8a0, 0x9a5a48];
@@ -2510,6 +2569,61 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
     { const im = new THREE.InstancedMesh(geoPiquet, matOsier, piquets.length), mm = new THREE.Matrix4(); piquets.forEach((q, i) => { mm.makeTranslation(...P(q[0], q[1], 0.5).toArray()); im.setMatrixAt(i, mm); }); im.castShadow = true; g.add(im); }
     JEU.potager = [C.c[0], C.c[1] + 5];
   }
+  // ---- le jardin des simples, dans la haute-cour (1435) : quatre carrés surélevés bordés de plessis, allées en croix,
+  // huit plantes étiquetées ; au milieu, la touche E ouvre la leçon
+  const JARDIN_HC = {};
+  {
+    const c = placeLibre(-10, -11.5), cote = 7.2, demi = cote / 2, allee = 0.9, g = new THREE.Group(), grp = G.medieval; grp.add(g);
+    const z0 = hauteurSol(...c), P = (u, v, dz = 0) => V(c[0] + u, c[1] + v, hauteurSol(c[0] + u, c[1] + v) + dz);
+    Object.assign(JARDIN_HC, { c });
+    const gravier = toileCanvas(128, 128, (x, w, h) => { x.fillStyle = '#b7aa8e'; x.fillRect(0, 0, w, h); for (let k = 0; k < 1400; k++) { const v = 120 + alea() * 90; x.fillStyle = `rgb(${v},${v * 0.94 | 0},${v * 0.82 | 0})`; x.fillRect(alea() * w, alea() * h, 2 + alea() * 2, 2 + alea() * 2); } });
+    const sol = new THREE.Mesh(new THREE.PlaneGeometry(cote, cote, 8, 8).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: gravier, roughness: 1, polygonOffset: true, polygonOffsetFactor: -1 }));
+    { const p = sol.geometry.attributes.position; for (let i = 0; i < p.count; i++) p.setY(i, hauteurSol(c[0] + p.getX(i), c[1] - p.getZ(i)) - z0 + 0.03); sol.geometry.computeVertexNormals(); }
+    sol.position.copy(V(c[0], c[1], z0)); sol.receiveShadow = true; g.add(sol);
+    const terre = new THREE.MeshStandardMaterial({ map: teA, color: 0x6a4c34, roughness: 1 }), osier = new THREE.MeshStandardMaterial({ color: 0x7a6040, roughness: 1 });
+    const cb = (demi - allee / 2 - 0.25) / 2 + allee / 2;   // centre de chaque carré
+    const plantes = SIMPLES.plantes, inst = {}, ajouter = (cle, geo, mat, x, y, dz, sc, ry = 0) => { (inst[cle] = inst[cle] || { geo, mat, l: [] }).l.push([x, y, dz, sc, ry]); };
+    let k = 0;
+    for (const su of [-1, 1]) for (const sv of [-1, 1]) {
+      const cu = su * cb, cv = sv * cb, t = demi - allee / 2 - 0.25;
+      const bac = new THREE.Mesh(new THREE.BoxGeometry(t, 0.3, t), terre); bac.position.copy(P(cu, cv, 0.12)); bac.receiveShadow = true; g.add(bac);
+      for (const [dx, dy, rx] of [[0, t / 2, 0], [0, -t / 2, 0], [t / 2, 0, 1], [-t / 2, 0, 1]]) { const b = new THREE.Mesh(new THREE.BoxGeometry(rx ? 0.06 : t + 0.06, 0.34, rx ? t + 0.06 : 0.06), osier); b.position.copy(P(cu + dx, cv + dy, 0.13)); g.add(b); }
+      for (const demiBac of [-1, 1]) {   // deux plantes par carré, une par moitié
+        const pl = plantes[k++], mu = cu + demiBac * t / 4, matF = new THREE.MeshStandardMaterial({ color: pl.teinte, roughness: 0.85, flatShading: true });
+        for (let i = 0; i < 18; i++) {
+          const x = mu + (alea() - 0.5) * (t / 2 - 0.25), y = cv + (alea() - 0.5) * (t - 0.3), sc = 0.8 + alea() * 0.4;
+          if (pl.forme === 'touffe') ajouter(pl.nom, new THREE.IcosahedronGeometry(0.17, 1).scale(1, 0.75, 1), matF, x, y, 0.37, sc);
+          else if (pl.forme === 'tapis') ajouter(pl.nom, new THREE.IcosahedronGeometry(0.14, 0).scale(1, 0.6, 1), matF, x, y, 0.34, sc * 1.1);
+          else if (pl.forme === 'plume') { ajouter(pl.nom, new THREE.IcosahedronGeometry(0.12, 0).scale(1, 1.6, 1), matF, x, y, 0.42, sc); ajouter(pl.nom + '_b', new THREE.IcosahedronGeometry(0.09, 0), matF, x + 0.08, y + 0.05, 0.33, sc); }
+          else if (pl.forme === 'epis') { ajouter(pl.nom, new THREE.IcosahedronGeometry(0.13, 0), matF, x, y, 0.36, sc); ajouter(pl.nom + '_f', new THREE.ConeGeometry(0.03, 0.22, 5).translate(0, 0.11, 0), new THREE.MeshStandardMaterial({ color: pl.fleur, roughness: 0.7 }), x, y, 0.45, sc); }
+          else if (pl.forme === 'fleurs') { ajouter(pl.nom, new THREE.IcosahedronGeometry(0.13, 0).scale(1, 0.7, 1), matF, x, y, 0.34, sc); ajouter(pl.nom + '_f', new THREE.SphereGeometry(0.045, 7, 5).scale(1, 0.5, 1), new THREE.MeshStandardMaterial({ color: pl.fleur, roughness: 0.7 }), x + 0.05, y, 0.47, sc); }
+          else if (pl.forme === 'tiges') ajouter(pl.nom, new THREE.CylinderGeometry(0.018, 0.024, 0.45, 5).translate(0, 0.22, 0), matF, x, y, 0.27, sc);
+          else ajouter(pl.nom, new THREE.SphereGeometry(0.2, 9, 7).scale(1, 0.75, 1), matF, x, y, 0.42, sc);
+        }
+        // étiquette de bois
+        const tx = toileCanvas(128, 48, (x, w, h) => { x.fillStyle = '#c9a874'; x.fillRect(0, 0, w, h); x.strokeStyle = '#5a3e22'; x.lineWidth = 3; x.strokeRect(2, 2, w - 4, h - 4); x.fillStyle = '#3a2614'; x.font = 'bold 22px Georgia, serif'; x.textAlign = 'center'; x.fillText(pl.nom, w / 2, 31); });
+        const et = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.16), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.9, side: THREE.DoubleSide }));
+        const pe = [mu, cv - sv * (t / 2 - 0.12)]; et.position.copy(P(pe[0], pe[1], 0.62)); et.rotation.y = sv > 0 ? 0 : Math.PI; et.rotation.order = 'YXZ'; et.rotation.x = -0.35; g.add(et);
+        const piquet = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.4, 0.03), M.bois); piquet.position.copy(P(pe[0], pe[1], 0.42)); g.add(piquet);
+      }
+    }
+    for (const cle in inst) { const I = inst[cle], im = new THREE.InstancedMesh(I.geo, I.mat, I.l.length), mm = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
+      I.l.forEach(([x, y, dz, sc], i) => { e.set(0, alea() * 6.28, 0); q.setFromEuler(e); mm.compose(P(x, y, dz), q, new THREE.Vector3(sc, sc, sc)); im.setMatrixAt(i, mm); }); im.castShadow = true; im.receiveShadow = true; g.add(im); }
+    // banc de bois et clôture basse de plessis, entrée à l'est (côté cour)
+    const banc = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 0.36), M.bois); banc.position.copy(P(-demi + 0.5, 0, 0.45)); banc.rotation.y = Math.PI / 2; g.add(banc);
+    for (const dv of [-0.55, 0.55]) { const pi = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.42, 0.07), M.bois); pi.position.copy(P(-demi + 0.5, dv, 0.21)); pi.rotation.y = Math.PI / 2; g.add(pi); }
+    const texP = toileCanvas(128, 64, (x, w, h) => { x.fillStyle = '#5a4630'; x.fillRect(0, 0, w, h); for (let y = 2; y < h; y += 7) { x.fillStyle = `rgb(${120 + alea() * 30 | 0},${95 + alea() * 25 | 0},${60 + alea() * 20 | 0})`; for (let px = 0; px < w; px += 16) { x.beginPath(); x.ellipse(px + ((y / 7) % 2) * 8, y + 3, 9, 3.2, 0, 0, 7); x.fill(); } } });
+    const matP = new THREE.MeshStandardMaterial({ map: texP, roughness: 1, side: THREE.DoubleSide });
+    for (const [a, b, entree] of [[[-demi, -demi], [demi, -demi]], [[demi, -demi], [demi, demi], true], [[demi, demi], [-demi, demi]], [[-demi, demi], [-demi, -demi]]]) {
+      const L = Math.hypot(b[0] - a[0], b[1] - a[1]), t = [(b[0] - a[0]) / L, (b[1] - a[1]) / L];
+      for (const [s0, s1] of entree ? [[0, L / 2 - 0.55], [L / 2 + 0.55, L]] : [[0, L]]) {
+        const m0 = [a[0] + t[0] * (s0 + s1) / 2, a[1] + t[1] * (s0 + s1) / 2], pl = new THREE.PlaneGeometry(s1 - s0, 0.55); { const uv = pl.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (s1 - s0), uv.getY(i) * 0.65); }
+        const o = new THREE.Mesh(pl, matP); o.position.copy(P(m0[0], m0[1], 0.29)); o.rotation.y = Math.atan2(t[1], t[0]); o.castShadow = true; g.add(o);
+        const A = [c[0] + a[0] + t[0] * s0, c[1] + a[1] + t[1] * s0], B = [c[0] + a[0] + t[0] * s1, c[1] + a[1] + t[1] * s1], n = [-t[1] * 0.15, t[0] * 0.15];
+        obstacles.push({ poly: [[A[0] + n[0], A[1] + n[1]], [B[0] + n[0], B[1] + n[1]], [B[0] - n[0], B[1] - n[1]], [A[0] - n[0], A[1] - n[1]]], village: false, medievalSeulement: true });
+      }
+    }
+  }
 
   // ---- animaux de basse-cour (formes simples)
   function animal(type) {
@@ -2608,7 +2722,7 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
   const CLE = 'oricourt_jeu_1435';
   // progression : sceaux, sujets écoutés, épreuves manquées (par habitant et en tout), trésors, expertises (id → juste ?),
   // lieux explorés, félicitations déjà montrées
-  const ETAT = ['sceaux', 'vus', 'rates', 'tresors', 'expertises', 'lieux', 'oeuvres', 'defense'];
+  const ETAT = ['sceaux', 'vus', 'rates', 'tresors', 'expertises', 'lieux', 'oeuvres', 'defense', 'jardin'];
   const viderEtat = () => { for (const k of ETAT) JEU[k] = {}; JEU.ratesN = 0; JEU.felicite = false; };
   viderEtat();
   const sauver = () => { try { localStorage.setItem(CLE, JSON.stringify({ ...Object.fromEntries(ETAT.map((k) => [k, JEU[k]])), ratesN: JEU.ratesN, felicite: JEU.felicite })); } catch (e) { /* stockage indisponible */ } };
@@ -2628,9 +2742,10 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
       ['Lieux explorés', LIEUX_JEU.filter((i) => JEU.lieux[i]).length, LIEUX_JEU.length, B.lieu],
       ['Œuvre d’art comprise', JEU.oeuvres.rolin === true ? 1 : 0, 1, B.oeuvre],
       ['Défense des hourds', Object.values(JEU.defense).filter((v) => v === true).length, DEFENSE.questions.length, B.defense],
+      ['Jardin des simples compris', JEU.jardin.q === true ? 1 : 0, 1, B.jardin],
     ];
     const total = lignes.reduce((s2, l) => s2 + l[1] * l[3], 0), max = lignes.reduce((s2, l) => s2 + l[2] * l[3], 0);
-    const donnees = n + JEU.ratesN + Object.keys(JEU.expertises).length + Object.keys(JEU.oeuvres).length + Object.keys(JEU.defense).length, justes = n + lignes[4][1] + lignes[6][1] + lignes[7][1];
+    const donnees = n + JEU.ratesN + Object.keys(JEU.expertises).length + Object.keys(JEU.oeuvres).length + Object.keys(JEU.defense).length + Object.keys(JEU.jardin).length, justes = n + lignes[4][1] + lignes[6][1] + lignes[7][1] + lignes[8][1];
     const reussite = donnees ? justes / donnees : 0;
     const rang = RANGS.find((r) => total / max >= r[0])[1];
     return { lignes, total, max, reussite, donnees, rang, reste: lignes.slice(3).some((l) => l[1] < l[2]) };
@@ -2841,6 +2956,7 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
       e.maj = () => { if (e.eclat) e.eclat.visible = !e.fait(); };
       e.maj(); OBJETS.push(e);
     };
+    OBJETS.push({ id: 'jardin', objet: 'jardin', nom: SIMPLES.titre, x: JARDIN_HC.c[0], y: JARDIN_HC.c[1], ph: 0, fait: () => false, maj() {} });
     OBJETS.push({ id: 'oeuvre', objet: 'oeuvre', nom: OEUVRE.titre, x: CHAPELLE.chevalet[0], y: CHAPELLE.chevalet[1], ph: 0, fait: () => false, maj() {} });
     { // l'épreuve des hourds : provision de pierres et arbalète au sommet de la tour maîtresse
       const S = SALLES_TOURS.find((q) => q.role === 'tour_maitresse'), E = S.volees[S.volees.length - 1], zH = E.z1, t = axe2(E.a, E.b).t;
@@ -2857,6 +2973,18 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
   }
   JEU.objets = OBJETS;
   function examiner(o) {
+    if (o.objet === 'jardin') {
+      const Q = SIMPLES.quiz, enJeu = epoque === 'jeu', repondu = JEU.jardin.q != null;
+      const tableau = `<table class="plantes"><tr><th>Plante</th><th>À quoi sert-elle ?</th></tr>${SIMPLES.plantes.map((p) => `<tr><td><b>${p.nom}</b></td><td>${p.usage}</td></tr>`).join('')}</table>`;
+      const quiz = () => ecranCarte(SIMPLES.titre, `<p><b>${Q.question}</b></p>`, Q.choix.map((c, k) => ({ texte: c, classe: 'choix', action: () => {
+        const juste = k === Q.juste; JEU.jardin.q = juste; sauver(); majCarnet();
+        ecranCarte(SIMPLES.titre, `<p>${juste ? Q.bravo : Q.rate}</p>` + (juste ? `<p class="gain">+${BAREME.jardin} XP · Jardin des simples compris</p>` : ''), [{ texte: 'Fermer' }]);
+      } })));
+      ecranCarte(SIMPLES.titre, SIMPLES.lecon.slice(0, 2).map(([t, p]) => `<h3>${t}</h3><p>${p}</p>`).join('') + tableau + `<h3>${SIMPLES.lecon[2][0]}</h3><p>${SIMPLES.lecon[2][1]}</p>` +
+        (enJeu && !repondu ? `<p><i>Une question t'attend sur ce jardin (+${BAREME.jardin} XP).</i></p>` : ''),
+        enJeu && !repondu ? [{ texte: 'Répondre à la question', action: quiz }, { texte: 'Plus tard', classe: 'discret' }] : [{ texte: 'Fermer' }]);
+      return;
+    }
     if (o.objet === 'defense') {
       const fait = Object.keys(JEU.defense).length >= DEFENSE.questions.length, note = !fait;
       AMB.jouer('cor', 0.7);
@@ -2904,7 +3032,7 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
   }
   invite.addEventListener('click', agir);
   JEU.touche = (e) => {
-    if (epoque === 'medieval' && !JEU.dialogue && (e.code === 'KeyE' || e.code === 'Enter') && cible && cible.objet === 'oeuvre') { agir(); return true; }
+    if (epoque === 'medieval' && !JEU.dialogue && (e.code === 'KeyE' || e.code === 'Enter') && cible && (cible.objet === 'oeuvre' || cible.objet === 'jardin')) { agir(); return true; }
     if (JEU.dialogue && JEU.dialogue.ecran && epoque !== 'actuel') { toucheEcran(e); return true; }
     if (epoque !== 'jeu') return false;
     if (JEU.dialogue) {
@@ -2929,11 +3057,12 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
     AMB.oiseaux(G.medieval, [10, -31], 28, 13, 6, 0x1c1c20, 1.15);   // choucas autour de la tour maîtresse
     AMB.oiseaux(G.actuel, [10, -31], 30, 14, 5, 0x1c1c20, 1.15);
     AMB.brume(G.commun, [-31, -25]);
+    AMB.passages(G.commun, [10, -40]);   // oies sauvages, canards de passage et faucon crécerelle
   }
   const VIV = { etat: 'attente', module: null, geste(id, it) { const h = this.module && this.module.trouver(id); if (h) h.gesticuler(it); } };
   JEU.VIV = VIV;
   const groupeBetes = new THREE.Group(); G.vie.add(groupeBetes);
-  const figurants = FIGURANTS.map((f) => { const [x, y] = placeLibre(f.pos[0], f.pos[1]); const g = new THREE.Group(); g.position.copy(V(x, y, hauteurSol(x, y))); g.rotation.y = Math.random() * 6; G.vie.add(g); return { ...f, g }; });
+  const figurants = [...FIGURANTS, ...FIGURANTS_HAMEAU.map((f) => ({ ...f, pos: pointMaison(f.ancre) }))].map((f) => { const [x, y] = placeLibre(f.pos[0], f.pos[1]); const g = new THREE.Group(); g.position.copy(V(x, y, hauteurSol(x, y))); g.rotation.y = Math.random() * 6; G.vie.add(g); return { ...f, g }; });
   // routines : postes résolus sur le terrain (place libre, trajet droit sans obstacle), meubles et ouvrages posés
   const groupeMeubles = new THREE.Group(); G.vie.add(groupeMeubles);
   const matBois = new THREE.MeshStandardMaterial({ color: 0x6e5236, roughness: 0.9 }), matPierre = new THREE.MeshStandardMaterial({ color: 0xc9b48a, roughness: 0.95 }), matFer = new THREE.MeshStandardMaterial({ color: 0x3c3a38, roughness: 0.5, metalness: 0.7 });
@@ -3036,10 +3165,10 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
     annoncer('Les habitants de 1435 arrivent…');
     const habitants = [
       ...JEU.pnj.map((p) => ({ id: p.id, desc: { ...p.studio, objetMarche: (ROUTINES[p.id] || {}).objetMarche }, act: p.activite, objet: p.g, routine: routineDe(p.id, [p.x, p.y]) })),
-      ...figurants.map((f) => ({ id: f.id, modele: f.modele, desc: f.studio, act: f.activite, objet: f.g, routine: f.activite.marche ? null : routineDe(f.id, [f.g.position.x, -f.g.position.z]) })),
+      ...figurants.map((f) => ({ id: f.id, modele: f.modele, echelle: f.echelle, sansOutil: f.sansOutil, desc: f.studio, act: f.activite, objet: f.g, routine: f.activite.marche ? null : routineDe(f.id, [f.g.position.x, -f.g.position.z]) })),
     ].filter((h) => MESHY.has(h.modele || h.id)).map((h) => ({ ...h, meshy: h.modele || h.id }));
     JEU.routines = Object.fromEntries(habitants.map((h) => [h.id, h.routine]));
-    chargerVivants({ groupeBetes, betes: BETES, habitants, sol: (x, y) => hauteurSol(x, y), etage: (x, y, z) => etageEn(x, y, z), libre: (x, y) => dansLePasse(() => !bloque(x, y)) && !surPlancher(x, y, 0.5) })
+    chargerVivants({ groupeBetes, betes: [...BETES, ...BETES_HAMEAU.map(([e, a, r, rb]) => { const p = pointMaison(a); return [e, p[0], p[1], r, rb]; })], habitants, sol: (x, y) => hauteurSol(x, y), etage: (x, y, z) => etageEn(x, y, z), libre: (x, y) => dansLePasse(() => !bloque(x, y)) && !surPlancher(x, y, 0.5) })
       .then((m) => {
         VIV.module = m; VIV.etat = 'pret';
         for (const a of JEU.animaux) a.g.visible = false;
@@ -3072,9 +3201,9 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
     if (epoque !== 'jeu') {
       for (const p of JEU.pnj) p.el.style.display = 'none';
       // visite de 1435 : seul le tableau du chevalet se regarde avec E
-      const oe = OBJETS.find((o) => o.objet === 'oeuvre');
-      cible = mode === 'pied' && oe && Math.hypot(marcheur.x - oe.x, marcheur.y - oe.y) < 1.9 ? oe : null;
-      if (cible && !JEU.dialogue) { invite.textContent = 'E · Regarder le tableau'; invite.style.display = 'block'; } else invite.style.display = 'none';
+      const oe = OBJETS.find((o) => (o.objet === 'oeuvre' || o.objet === 'jardin') && Math.hypot(marcheur.x - o.x, marcheur.y - o.y) < 1.9);
+      cible = mode === 'pied' && oe ? oe : null;
+      if (cible && !JEU.dialogue) { invite.textContent = cible.objet === 'jardin' ? 'E · Découvrir le jardin des simples' : 'E · Regarder le tableau'; invite.style.display = 'block'; } else invite.style.display = 'none';
       return;
     }
     let proche = null, dMin = 3.4;
@@ -3094,14 +3223,14 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
       for (const o of OBJETS) {
         const d = Math.hypot(marcheur.x - o.x, marcheur.y - o.y) + (o.z != null ? (Math.abs((marcheur.z ?? hauteurSol(marcheur.x, marcheur.y)) - o.z) > 1.5 ? 99 : 0) : 0);
         if (o.eclat && o.eclat.visible) { o.eclat.material.opacity = d < 14 ? 0.45 + 0.4 * Math.sin(JEU.t * 3.2 + o.ph) : 0; o.eclat.scale.setScalar(0.3 + 0.08 * Math.sin(JEU.t * 2.1 + o.ph)); }
-        if ((epoque === 'jeu' || o.objet === 'oeuvre') && !o.fait() && d < dO && (!proche || d < dMin)) { dO = d; cible = o; }
+        if ((epoque === 'jeu' || o.objet === 'oeuvre' || o.objet === 'jardin') && !o.fait() && d < dO && (!proche || d < dMin)) { dO = d; cible = o; }
       }
       for (const i of LIEUX_JEU) if (!JEU.lieux[i] && Math.hypot(marcheur.x - LIEUX[i].p[0], marcheur.y - LIEUX[i].p[1]) < 7) {
         JEU.lieux[i] = 1; sauver(); majCarnet(); annoncer(`Lieu exploré : ${LIEUX[i].titre.replace(/ \(.*\)$/, '')} (+${BAREME.lieu} XP)`);
       }
     }
     if (mode === 'pied' && nbSceaux() === PERSONNAGES.length && Math.hypot(marcheur.x - PUITS[0], marcheur.y - PUITS[1]) < 3.2) cible = 'puits';
-    if (cible && !JEU.dialogue) { invite.textContent = cible === 'puits' ? 'E · Se pencher au-dessus du puits' : cible.objet === 'oeuvre' ? 'E · Regarder le tableau' : cible.objet === 'defense' ? 'E · Prendre son poste de défense' : cible.objet ? 'E · Examiner' : `E · Parler à ${cible.nom}`; invite.style.display = 'block'; } else invite.style.display = 'none';
+    if (cible && !JEU.dialogue) { invite.textContent = cible === 'puits' ? 'E · Se pencher au-dessus du puits' : cible.objet === 'oeuvre' ? 'E · Regarder le tableau' : cible.objet === 'jardin' ? 'E · Découvrir le jardin des simples' : cible.objet === 'defense' ? 'E · Prendre son poste de défense' : cible.objet ? 'E · Examiner' : `E · Parler à ${cible.nom}`; invite.style.display = 'block'; } else invite.style.display = 'none';
     const dB = Math.hypot(marcheur.x - CENTRE_BROUILLARD[0], marcheur.y - CENTRE_BROUILLARD[1]);
     voile.style.opacity = mode === 'pied' ? clamp((dB - (RAYON_BROUILLARD - 16)) / 16, 0, 0.92) : 0;
     if (JEU.repousse > 0) { JEU.repousse -= dt; if (!finAnnonce) annoncer('Le brouillard se referme devant toi et te repousse doucement vers le château…'); }
