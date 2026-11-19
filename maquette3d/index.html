@@ -121,6 +121,19 @@
   #ecran .boite { max-width: 620px; background: var(--fond-2); border: 1px solid var(--bord); border-radius: 12px; padding: 24px 26px; }
   #ecran h2 { font-family: "Cormorant Garamond", Georgia, serif; font-size: 34px; margin: 0 0 12px; } #ecran p { font-size: 16px; line-height: 1.6; margin: 0 0 12px; }
   #ecran button { background: var(--or); color: #1d1608; border-color: var(--or); font-size: 15px; padding: 11px 18px; }
+  #ecran .boite { max-height: calc(100vh - 32px); overflow: auto; }
+  #ecran h3 { font-family: "Cormorant Garamond", Georgia, serif; font-size: 22px; margin: 4px 0 8px; color: var(--or); }
+  #ecran .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  #ecran .actions button.discret { background: transparent; color: var(--encre-2); border-color: var(--bord); }
+  #ecran .gain { font-weight: 700; color: var(--or); }
+  #ecran table.tableau { width: 100%; border-collapse: collapse; margin: 6px 0 12px; font-size: 14.5px; }
+  #ecran table.tableau th, #ecran table.tableau td { text-align: left; padding: 6px 8px; border-bottom: 1px solid rgba(243,234,216,0.14); }
+  #ecran table.tableau td:nth-child(n+2), #ecran table.tableau th:nth-child(n+2) { text-align: right; white-space: nowrap; }
+  #ecran table.tableau tfoot td { font-weight: 700; color: var(--or); border-bottom: none; font-size: 16px; }
+  #ecran .barre { display: block; height: 4px; margin-top: 4px; background: rgba(243,234,216,0.12); border-radius: 2px; overflow: hidden; }
+  #ecran .barre i { display: block; height: 100%; background: var(--or); }
+  #ecran .rang { font-size: 15px; }
+  #carnet li.xp { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--or); }
   .marqueur.pnj { transform: translate(-50%, -100%); flex-direction: column; gap: 3px; }
   .marqueur.pnj .etiq { display: none; flex-direction: column; align-items: center; background: rgba(24,20,14,0.85); border-radius: 7px; padding: 4px 9px; font-size: 12.5px; white-space: nowrap; }
   .marqueur.pnj .etiq i { font-size: 11px; color: var(--encre-2); font-style: normal; }

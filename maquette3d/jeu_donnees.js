@@ -9,6 +9,7 @@ export const INTRO = {
     "Pendant la visite, tu t'es penché au-dessus de la margelle du vieux puits. Une brume froide est montée du fond, a rempli la galerie, puis toute la cour…",
     "Quand elle se dissipe, les murs ont retrouvé leurs créneaux, les tours leurs toits. Des poules courent dans la basse-cour. Nous sommes à l'automne de l'an 1435.",
     "Un brouillard étrange encercle le château : impossible de s'éloigner. Pour rentrer chez toi, il faut comprendre ce monde. Parle aux habitants : chacun te confiera un savoir et te posera une question. Gagne leurs neuf sceaux, puis reviens au puits.",
+    "Garde l'œil ouvert en chemin : le château a ses secrets, et le brouillard a pu égarer ici des choses qui n'ont rien à y faire. Écouter, explorer, examiner et bien répondre du premier coup te rapporte des points d'expérience : ton carnet tient les comptes.",
   ],
   bouton: "Entrer dans l'an 1435",
 };
@@ -20,7 +21,7 @@ export const FIN = {
     "Tu sais maintenant qui vit ici, qui commande, qui travaille, ce qu'on mange, comment on se défend et comment on compte le temps. Le brouillard te laisse passer.",
     "Quand il se lève, le guide est en train de dire : « … et voici le puits, profond de vingt-deux mètres. » Tu souris. Tu le savais déjà.",
   ],
-  bouton: "Revenir aujourd'hui",
+  bouton: "Voir mon tableau d'honneur",
 };
 
 export const CENTRE_BROUILLARD = [14, -30];
@@ -247,3 +248,47 @@ export const ROUTINES = {
     { a: 'base', fond: 'attendre', gestes: ['recolter', 'recolter', 'souffler'], periode: [1.5, 4], duree: [20, 30] },
     { a: [2.5, 1], fond: 'attendre', gestes: ['recolter'], periode: [1.5, 4], duree: [15, 20] }] },
 };
+
+// ---- secrets et expertises (serious game). Les positions sont des points d'ancrage : le jeu cherche la place libre la
+// plus proche. ancre : [x, y] en mètres, ou 'salle', 'colombier', 'puits' (+ decal [dx, dy]).
+// Trésors cachés : un objet à examiner, qui livre un savoir sur la vie au Moyen Âge.
+export const TRESORS = [
+  { id: 'coffre', forme: 'coffre', ancre: 'salle', decal: [1.6, 0.6], nom: 'Un coffre de chêne bardé de fer',
+    texte: "Au Moyen Âge, le meuble roi est le coffre. On y range le linge, les habits, la vaisselle précieuse et les parchemins ; il sert aussi de banc et même de lit d'appoint. Les seigneurs passent d'un château à l'autre avec leurs coffres : les armoires restent rares." },
+  { id: 'bourse', forme: 'bourse', ancre: [10.2, -59.6], nom: "Une bourse de cuir enfouie au pied d'un arbre",
+    texte: "Dedans, quelques pièces. On compte en livres, en sous et en deniers : 1 livre vaut 20 sous, et 1 sou vaut 12 deniers. La livre et le sou servent à compter ; dans la bourse, on trouve surtout des deniers et des « gros ». En temps de guerre, on cachait son argent dans la terre : on retrouve encore aujourd'hui de ces trésors enfouis." },
+  { id: 'ecritoire', forme: 'ecritoire', ancre: 'colombier', decal: [-1.0, 1.1], nom: "Une plume d'oie et une corne à encre",
+    texte: "On écrit avec une plume d'oie taillée au canif, trempée dans une encre de noix de galle. Le support le plus solide est le parchemin, une peau de mouton ou de veau préparée ; le papier, venu de Chine par le monde arabe, se répand peu à peu. Tous les livres sont encore copiés à la main : l'imprimerie de Gutenberg n'apparaîtra que vers 1450." },
+  { id: 'merelles', forme: 'merelles', ancre: [3.5, 11.5], nom: 'Une pierre gravée de lignes',
+    texte: "Trois carrés emboîtés reliés par des traits : c'est un plateau de mérelles, le « jeu du moulin ». Chaque joueur pose puis déplace neuf pions ; qui en aligne trois forme un « moulin » et prend un pion à l'autre. Gardes et soldats en gravaient sur les pierres des châteaux pour passer le temps." },
+  { id: 'fer', forme: 'fer', ancre: [41.5, -17], nom: 'Un fer à cheval et ses clous',
+    texte: "Le cheval est un bien précieux : un destrier, le cheval de guerre, coûte une petite fortune. Le maréchal-ferrant cloue des fers sous ses sabots pour les protéger sur les chemins de pierre, et le soigne quand il boite. On ferre les chevaux en Europe depuis le Moyen Âge central, vers l'an mil." },
+  { id: 'carreau', forme: 'carreau', ancre: [-16.5, -19.5], nom: "Un carreau d'arbalète fiché dans la terre",
+    texte: "L'arbalète ne tire pas des flèches mais des « carreaux », à pointe carrée, capables de percer une cotte de mailles. Elle était si redoutée qu'en 1139 un concile de l'Église a tenté d'en interdire l'usage entre chrétiens… sans succès. Les gardes l'utilisent depuis les archères des murailles." },
+  { id: 'simples', forme: 'simples', ancre: [23, -50], nom: 'Un sachet de graines et des plantes séchées',
+    texte: "Les « simples » sont les plantes qui soignent : sauge, hysope, rue, menthe, camomille. On les cultive au jardin et on note leurs vertus dans des herbiers. Contre la fièvre, on boit une tisane d'écorce de saule : c'est d'elle qu'on tirera, bien plus tard, l'aspirine !" },
+  { id: 'tranchoir', forme: 'tranchoir', ancre: [9.5, 2.0], nom: 'Une tranche de pain posée sur une table',
+    texte: "Ce n'est pas un reste de repas : c'est un tranchoir, une épaisse tranche de pain rassis qui sert d'assiette. On pose dessus la viande et la sauce ; ensuite, le pain imbibé est mangé, ou donné aux pauvres et aux chiens. On mange avec les doigts, une cuillère et un couteau : la fourchette de table est encore presque inconnue en France." },
+];
+// Objets à expertiser : l'élève dit si l'objet peut se trouver à Oricourt en 1435 (ancien : true) ou si c'est un anachronisme.
+export const EXPERTISES = [
+  { id: 'patates', forme: 'patates', ancre: [11, 0.5], nom: 'Une cagette de pommes de terre', ancien: false,
+    texte: "La pomme de terre vient des Andes, en Amérique du Sud. Les Européens ne la découvrent qu'après les voyages vers l'Amérique, à partir de 1492, et en France elle ne devient courante qu'au XVIIIe siècle, grâce notamment à Parmentier." },
+  { id: 'mais', forme: 'mais', ancre: [29, -48], nom: 'Des épis de maïs', ancien: false,
+    texte: "Le maïs a été domestiqué au Mexique il y a des milliers d'années ; il ne traverse l'Atlantique qu'après 1492. En 1435, on cultive ici le blé, le seigle, l'orge, l'avoine et le millet." },
+  { id: 'tomates', forme: 'tomates', ancre: [34, -25], nom: 'Un panier de tomates', ancien: false,
+    texte: "La tomate vient elle aussi d'Amérique. Arrivée en Europe au XVIe siècle, elle passe d'abord pour une plante décorative, un peu suspecte ; en France, on ne la mange vraiment qu'à partir de la fin du XVIIIe siècle." },
+  { id: 'citrouille', forme: 'citrouille', ancre: [23.5, -43.5], nom: 'Une grosse citrouille orange', ancien: false,
+    texte: "Cette citrouille orange est une courge venue d'Amérique. En 1435, la seule courge connue ici est la calebasse, une gourde qu'on fait sécher pour s'en servir de bouteille." },
+  { id: 'conserve', forme: 'conserve', ancre: [44, -36.5], nom: 'Une boîte de conserve', ancien: false,
+    texte: "Pour garder les aliments, on les sale, on les fume, on les sèche, on les met dans le miel ou le vinaigre. La conserve en bocal est inventée par Nicolas Appert vers 1795, et la boîte en fer-blanc en 1810." },
+  { id: 'choux', forme: 'choux', ancre: [10.5, 5.5], nom: 'Un panier de choux et de raves', ancien: true,
+    texte: "Choux, raves, navets, poireaux, fèves et pois : voilà les légumes du potager médiéval. Ils finissent dans le potage, le plat de tous les jours." },
+  { id: 'quenouille', forme: 'quenouille', ancre: [-4.5, -2], nom: 'Une quenouille et un fuseau', ancien: true,
+    texte: "La quenouille tient la laine ou le lin, le fuseau tourne pour tordre le fil : les femmes filent à longueur de journée, même en marchant. Le rouet existe aussi, mais il coûte plus cher." },
+  { id: 'faucille', forme: 'faucille', ancre: [7.5, -66], nom: 'Une faucille posée sur une gerbe', ancien: true,
+    texte: "La faucille sert à moissonner les céréales, poignée par poignée. La faux, plus grande, sert surtout à couper l'herbe des prés pour faire le foin." },
+];
+// Barème du tableau d'honneur
+export const BAREME = { sceau: 100, premierCoup: 50, ecoute: 10, tresor: 75, expertise: 40, lieu: 15 };
+export const RANGS = [[0.9, "Maître chroniqueur d'Oricourt"], [0.7, 'Chevalier du savoir'], [0.5, 'Écuyer curieux'], [0.3, 'Page attentif'], [0, 'Voyageur égaré']];

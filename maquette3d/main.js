@@ -5,7 +5,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from './lib/OrbitControls.js';
 import { mergeGeometries } from './lib/BufferGeometryUtils.js';
-import { INTRO, FIN, PERSONNAGES, ANIMAUX, BETES, FIGURANTS, ROUTINES, MASURES, CENTRE_BROUILLARD, RAYON_BROUILLARD, DEPART } from './jeu_donnees.js';
+import { INTRO, FIN, PERSONNAGES, ANIMAUX, BETES, FIGURANTS, ROUTINES, MASURES, CENTRE_BROUILLARD, RAYON_BROUILLARD, DEPART, TRESORS, EXPERTISES, BAREME, RANGS } from './jeu_donnees.js';
+import { fabriquer, etincelle } from './objets_jeu.js';
 import { chargerVivants } from './vivants.js';
 
 const $ = (id) => document.getElementById(id);
@@ -637,7 +638,7 @@ function construireSalle(sPorte, lp, hp) {
   passages.push({ role: 'logis_rolin', poly: [P(sPorte - lp + 0.2, prof - 0.5), P(sPorte + lp - 0.2, prof - 0.5), P(sPorte + lp - 0.2, d0 + 0.5), P(sPorte - lp + 0.2, d0 + 0.5)] });
   passages.push({ role: 'logis_rolin', poly: [P(s0 + 0.35, d0 + 0.35), P(s1 - 0.35, d0 + 0.35), P(s1 - 0.35, D1 - 0.35), P(s0 + 0.35, D1 - 0.35)] });
   const sm = (s0 + s1) / 2 + xc; obstacles.push({ poly: [P(sm - 1.5, D1 - 1.1), P(sm + 1.5, D1 - 1.1), P(sm + 1.5, D1), P(sm - 1.5, D1)], village: false });
-  Object.assign(SALLE, { centre: P((s0 + s1) / 2, d0 + W / 2), entree: P(sPorte, d0 + 1.2), long: s1 - s0, larg: W });
+  Object.assign(SALLE, { sol: zs, centre: P((s0 + s1) / 2, d0 + W / 2), entree: P(sPorte, d0 + 1.2), long: s1 - s0, larg: W });
 }
 function construireGalerie(cible) {
   const { L, t, n, prof, ep, ouv, sol, zHaut } = GAL, pile = (L - 3 * ouv) / 4, P = GAL.pt;
@@ -1568,14 +1569,61 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
 
   // ---- interface du jeu
   const CLE = 'oricourt_jeu_1435';
-  const sauver = () => { try { localStorage.setItem(CLE, JSON.stringify({ sceaux: JEU.sceaux, vus: JEU.vus })); } catch (e) { /* stockage indisponible */ } };
-  try { const d = JSON.parse(localStorage.getItem(CLE) || 'null'); if (d) { JEU.sceaux = d.sceaux || {}; JEU.vus = d.vus || {}; } } catch (e) { /* stockage indisponible */ }
+  // progression : sceaux, sujets écoutés, épreuves manquées (par habitant et en tout), trésors, expertises (id → juste ?),
+  // lieux explorés, félicitations déjà montrées
+  const ETAT = ['sceaux', 'vus', 'rates', 'tresors', 'expertises', 'lieux'];
+  const viderEtat = () => { for (const k of ETAT) JEU[k] = {}; JEU.ratesN = 0; JEU.felicite = false; };
+  viderEtat();
+  const sauver = () => { try { localStorage.setItem(CLE, JSON.stringify({ ...Object.fromEntries(ETAT.map((k) => [k, JEU[k]])), ratesN: JEU.ratesN, felicite: JEU.felicite })); } catch (e) { /* stockage indisponible */ } };
+  try { const d = JSON.parse(localStorage.getItem(CLE) || 'null'); if (d) { for (const k of ETAT) JEU[k] = d[k] || {}; JEU.ratesN = d.ratesN || 0; JEU.felicite = !!d.felicite; } } catch (e) { /* stockage indisponible */ }
   const nbSceaux = () => PERSONNAGES.filter((p) => JEU.sceaux[p.id]).length;
   const invite = $('invite'), voile = $('voile'), ecran = $('ecran');
+  // ---- points d'expérience et tableau d'honneur
+  const LIEUX_JEU = LIEUX.map((l, i) => i).filter((i) => LIEUX[i].p && Math.hypot(LIEUX[i].p[0] - CENTRE_BROUILLARD[0], LIEUX[i].p[1] - CENTRE_BROUILLARD[1]) < RAYON_BROUILLARD - 4);
+  function bilan() {
+    const n = nbSceaux(), N = PERSONNAGES.length, B = BAREME;
+    const lignes = [
+      ['Sceaux obtenus', n, N, B.sceau],
+      ['Sceaux gagnés du premier coup', PERSONNAGES.filter((p) => JEU.sceaux[p.id] && !JEU.rates[p.id]).length, N, B.premierCoup],
+      ['Savoirs écoutés', PERSONNAGES.reduce((s2, p) => s2 + p.sujets.filter((x, k) => JEU.vus[p.id + k]).length, 0), PERSONNAGES.reduce((s2, p) => s2 + p.sujets.length, 0), B.ecoute],
+      ['Trésors découverts', TRESORS.filter((o) => JEU.tresors[o.id]).length, TRESORS.length, B.tresor],
+      ['Objets bien expertisés', EXPERTISES.filter((o) => JEU.expertises[o.id] === true).length, EXPERTISES.length, B.expertise],
+      ['Lieux explorés', LIEUX_JEU.filter((i) => JEU.lieux[i]).length, LIEUX_JEU.length, B.lieu],
+    ];
+    const total = lignes.reduce((s2, l) => s2 + l[1] * l[3], 0), max = lignes.reduce((s2, l) => s2 + l[2] * l[3], 0);
+    const donnees = n + JEU.ratesN + Object.keys(JEU.expertises).length, justes = n + lignes[4][1];
+    const reussite = donnees ? justes / donnees : 0;
+    const rang = RANGS.find((r) => total / max >= r[0])[1];
+    return { lignes, total, max, reussite, donnees, rang, reste: lignes.slice(3).some((l) => l[1] < l[2]) };
+  }
+  function tableauHTML() {
+    const b = bilan();
+    return `<table class="tableau"><thead><tr><th>Épreuve</th><th>Réussi</th><th>Points</th></tr></thead><tbody>` +
+      b.lignes.map(([t, n, N, pts]) => `<tr><td>${t}<span class="barre"><i style="width:${Math.round(100 * n / (N || 1))}%"></i></span></td><td>${n} / ${N}</td><td>${n * pts} XP</td></tr>`).join('') +
+      `</tbody><tfoot><tr><td>Total</td><td></td><td>${b.total} / ${b.max} XP</td></tr></tfoot></table>` +
+      `<p class="rang">Réponses justes : <b>${b.donnees ? Math.round(b.reussite * 100) + ' %' : '—'}</b> · Rang : <b>${b.rang}</b></p>`;
+  }
+  function ecranCarte(titre, html, boutons) {
+    ecran.innerHTML = `<div class="boite"><h2>${titre}</h2>${html}<div class="actions">${boutons.map((b2, k) => `<button data-k="${k}" class="${b2.classe || ''}">${b2.texte}</button>`).join('')}</div></div>`;
+    ecran.style.display = 'grid'; JEU.dialogue = { ecran: true };
+    ecran.querySelectorAll('.actions button').forEach((el) => el.addEventListener('click', () => { ecran.style.display = 'none'; JEU.dialogue = null; const a = boutons[+el.dataset.k].action; a && a(); }));
+  }
+  function feliciter() {
+    JEU.felicite = true; sauver();
+    const b = bilan();
+    ecranCarte('Félicitations, voyageur !', `<p>Les neuf habitants t'ont confié leur sceau : tu as compris comment vit le château d'Oricourt en 1435.</p>${tableauHTML()}` +
+      `<p>${b.reste ? "Le château n'a pas encore livré tous ses secrets. Tu peux continuer à explorer pour gagner des points, puis retourner au puits, sous la galerie de la haute-cour, pour rentrer chez toi." : 'Tu as tout trouvé, bravo ! Retourne au puits, sous la galerie de la haute-cour, pour rentrer chez toi.'}</p>`,
+      [{ texte: 'Continuer', action: () => annoncer('Le puits t\'attend sous la galerie de la haute-cour.') }]);
+  }
   function majCarnet() {
-    $('b-carnet').textContent = `Carnet · ${nbSceaux()}/${PERSONNAGES.length} sceaux`;
-    $('carnet-liste').innerHTML = PERSONNAGES.map((p) => JEU.sceaux[p.id] ? `<li><b>✦ ${p.nom}</b> — ${p.savoir}</li>` : `<li class="vide">○ ${p.nom}, ${p.role} : à rencontrer</li>`).join('') +
-      (nbSceaux() === PERSONNAGES.length ? '<li><b>Tous les sceaux sont réunis : retourne au puits, sous la galerie.</b></li>' : '');
+    const b = bilan();
+    $('b-carnet').textContent = `Carnet · ${nbSceaux()}/${PERSONNAGES.length} sceaux · ${b.total} XP`;
+    $('carnet-liste').innerHTML = `<li class="xp"><b>${b.total} XP</b> · ${b.rang} <button id="carnet-tableau" class="discret">Tableau des points</button></li>` +
+      PERSONNAGES.map((p) => JEU.sceaux[p.id] ? `<li><b>✦ ${p.nom}</b> — ${p.savoir}</li>` : `<li class="vide">○ ${p.nom}, ${p.role} : à rencontrer</li>`).join('') +
+      (nbSceaux() === PERSONNAGES.length ? '<li><b>Tous les sceaux sont réunis : retourne au puits, sous la galerie.</b></li>' : '') +
+      TRESORS.filter((o) => JEU.tresors[o.id]).map((o) => `<li><b>◆ ${o.nom}</b> — ${o.texte}</li>`).join('') +
+      EXPERTISES.filter((o) => o.id in JEU.expertises).map((o) => `<li><b>${JEU.expertises[o.id] ? '✔' : '✘'} ${o.nom}</b> : ${o.ancien ? 'existait bien en 1435' : 'anachronisme'}. ${o.texte}</li>`).join('');
+    $('carnet-tableau').addEventListener('click', () => { $('carnet').style.display = 'none'; ecranCarte('Ton tableau des points', tableauHTML(), [{ texte: 'Fermer' }]); });
     for (const p of JEU.pnj) { p.el.querySelector('.sceau').textContent = JEU.sceaux[p.id] ? '✦' : '?'; p.el.classList.toggle('fait', !!JEU.sceaux[p.id]); }
   }
   function ecranTexte(o, suite) {
@@ -1667,11 +1715,12 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
   function gagner(p) {
     JEU.sceaux[p.id] = 1; sauver(); majCarnet();
     rendre(p, { dit: 'Bien répondu ! Voici mon sceau, voyageur.', narr: p.question.explication, issue: `✦ Sceau de ${p.nom} obtenu (${nbSceaux()}/${PERSONNAGES.length})`, choix: [
-      { texte: nbSceaux() === PERSONNAGES.length ? 'Retourner au puits' : 'Continuer à parler', classe: 'guide', action: () => { if (nbSceaux() === PERSONNAGES.length) { fermerDialogue(); annoncer('Tu as les neuf sceaux ! Retourne au puits, sous la galerie de la haute-cour.'); } else rendre(p, { dit: 'Autre chose ?', choix: choixDeBase(p) }); } },
-      { texte: 'Partir', classe: 'rapide', dire: 'Merci, au revoir.', action: fermerDialogue }] });
+      { texte: nbSceaux() === PERSONNAGES.length ? 'Retourner au puits' : 'Continuer à parler', classe: 'guide', action: () => { if (nbSceaux() === PERSONNAGES.length) { fermerDialogue(); feliciter(); } else rendre(p, { dit: 'Autre chose ?', choix: choixDeBase(p) }); } },
+      { texte: 'Partir', classe: 'rapide', dire: 'Merci, au revoir.', action: () => { fermerDialogue(); if (nbSceaux() === PERSONNAGES.length && !JEU.felicite) feliciter(); } }] });
     VIV.geste(p.id, 'oui');
   }
   function rater(p) {
+    JEU.rates[p.id] = 1; JEU.ratesN += 1; sauver(); majCarnet();
     rendre(p, { dit: 'Hum… non, ce n\'est pas cela. Écoute encore ce que j\'ai à te dire, puis reviens me voir.', issue: 'Épreuve du sceau : manquée', choix: choixDeBase(p) });
     VIV.geste(p.id, 'non');
   }
@@ -1716,9 +1765,46 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
   $('b-musique').addEventListener('click', () => { MUSIQUE.voulu = !MUSIQUE.voulu; try { localStorage.setItem('oricourt_musique', MUSIQUE.voulu ? 'oui' : 'non'); } catch (e) { /* rien */ } musiqueAjuster(); });
   $('b-carnet').addEventListener('click', () => { const c = $('carnet'); c.style.display = c.style.display === 'block' ? 'none' : 'block'; });
   $('carnet-fermer').addEventListener('click', () => { $('carnet').style.display = 'none'; });
-  $('carnet-zero').addEventListener('click', () => { JEU.sceaux = {}; JEU.vus = {}; sauver(); majCarnet(); });
+  $('carnet-zero').addEventListener('click', () => { viderEtat(); sauver(); majCarnet(); for (const o of OBJETS) o.maj(); });
   let cible = null;
-  const agir = () => { if (!cible || JEU.dialogue) return; if (cible === 'puits') ecranTexte(FIN, () => { changerEpoque('actuel'); annoncer('Bienvenue de retour au XXIe siècle. Ton carnet garde tout ce que tu as appris.'); }); else ouvrirDialogue(cible); };
+  const agir = () => {
+    if (!cible || JEU.dialogue) return;
+    if (cible === 'puits') ecranTexte(FIN, () => ecranCarte("Ton tableau d'honneur", tableauHTML(), [{ texte: "Revenir aujourd'hui", action: () => { changerEpoque('actuel'); annoncer('Bienvenue de retour au XXIe siècle. Ton carnet garde tout ce que tu as appris.'); } }]));
+    else if (cible.objet) examiner(cible); else ouvrirDialogue(cible);
+  };
+  // ---- trésors cachés et objets à expertiser
+  const OBJETS = [];
+  {
+    const ancreDe = (o) => { let a = o.ancre; if (a === 'salle') a = SALLE.centre; else if (a === 'colombier') a = COLOMBIER.c; else if (a === 'puits') a = PUITS; const d = o.decal || [0, 0]; return [a[0] + d[0], a[1] + d[1]]; };
+    const poser = (o, type) => {
+      const [x, y] = placeLibre(...ancreDe(o)), g = fabriquer(o.forme);
+      const z = o.ancre === 'salle' ? SALLE.sol : hauteurSol(x, y);   // la salle voûtée a son propre sol
+      g.position.copy(V(x, y, z)); g.rotation.y = (o.id.length * 1.7) % 6.28; G.jeu.add(g);
+      const e = { ...o, objet: type, x, y, g, ph: o.id.length };
+      if (type === 'tresor') { e.eclat = etincelle(); e.eclat.position.copy(V(x, y, z + 0.95)); G.jeu.add(e.eclat); }
+      e.fait = () => type === 'tresor' ? !!JEU.tresors[o.id] : (o.id in JEU.expertises);
+      e.maj = () => { if (e.eclat) e.eclat.visible = !e.fait(); };
+      e.maj(); OBJETS.push(e);
+    };
+    for (const o of TRESORS) poser(o, 'tresor');
+    for (const o of EXPERTISES) poser(o, 'expertise');
+  }
+  JEU.objets = OBJETS;
+  function examiner(o) {
+    if (o.objet === 'tresor') {
+      JEU.tresors[o.id] = 1; sauver(); majCarnet(); o.maj();
+      const n = TRESORS.filter((t) => JEU.tresors[t.id]).length;
+      ecranCarte('Trésor découvert !', `<h3>${o.nom}</h3><p>${o.texte}</p><p class="gain">+${BAREME.tresor} XP · trésor ${n} sur ${TRESORS.length}</p>`, [{ texte: 'Continuer' }]);
+      return;
+    }
+    const verdict = (dit) => {
+      const juste = dit === o.ancien; JEU.expertises[o.id] = juste; sauver(); majCarnet(); o.maj();
+      ecranCarte(juste ? 'Bien vu !' : 'Raté…', `<h3>${o.nom} : ${o.ancien ? 'il existe bien en 1435' : "c'est un anachronisme"}</h3><p>${o.texte}</p>` +
+        `<p class="gain">${juste ? '+' + BAREME.expertise + ' XP' : '0 XP, mais tu le sais maintenant !'}</p>`, [{ texte: 'Continuer' }]);
+    };
+    ecranCarte('Objet à expertiser', `<h3>${o.nom}</h3><p>Cet objet a-t-il sa place à Oricourt, en l'an 1435 ? Réfléchis bien : tu n'as droit qu'à une réponse.</p>`,
+      [{ texte: 'Oui, il existe en 1435', action: () => verdict(true) }, { texte: "Non, c'est un anachronisme !", action: () => verdict(false) }, { texte: 'Plus tard', classe: 'discret' }]);
+  }
   invite.addEventListener('click', agir);
   JEU.touche = (e) => {
     if (epoque !== 'jeu') return false;
@@ -1833,8 +1919,19 @@ const JEU = { pnj: [], animaux: [], dialogue: null, repousse: 0, sceaux: {}, vus
       if (vis) { p.el.style.left = ((v3.x + 1) / 2 * innerWidth) + 'px'; p.el.style.top = ((1 - v3.y) / 2 * innerHeight) + 'px'; p.el.classList.toggle('pres', d < 9); }
     }
     cible = proche;
+    if (mode === 'pied') {
+      let dO = 1.9;
+      for (const o of OBJETS) {
+        const d = Math.hypot(marcheur.x - o.x, marcheur.y - o.y);
+        if (o.eclat && o.eclat.visible) { o.eclat.material.opacity = d < 14 ? 0.45 + 0.4 * Math.sin(JEU.t * 3.2 + o.ph) : 0; o.eclat.scale.setScalar(0.3 + 0.08 * Math.sin(JEU.t * 2.1 + o.ph)); }
+        if (!o.fait() && d < dO && (!proche || d < dMin)) { dO = d; cible = o; }
+      }
+      for (const i of LIEUX_JEU) if (!JEU.lieux[i] && Math.hypot(marcheur.x - LIEUX[i].p[0], marcheur.y - LIEUX[i].p[1]) < 7) {
+        JEU.lieux[i] = 1; sauver(); majCarnet(); annoncer(`Lieu exploré : ${LIEUX[i].titre.replace(/ \(.*\)$/, '')} (+${BAREME.lieu} XP)`);
+      }
+    }
     if (mode === 'pied' && nbSceaux() === PERSONNAGES.length && Math.hypot(marcheur.x - PUITS[0], marcheur.y - PUITS[1]) < 3.2) cible = 'puits';
-    if (cible && !JEU.dialogue) { invite.textContent = cible === 'puits' ? 'E · Se pencher au-dessus du puits' : `E · Parler à ${cible.nom}`; invite.style.display = 'block'; } else invite.style.display = 'none';
+    if (cible && !JEU.dialogue) { invite.textContent = cible === 'puits' ? 'E · Se pencher au-dessus du puits' : cible.objet ? 'E · Examiner' : `E · Parler à ${cible.nom}`; invite.style.display = 'block'; } else invite.style.display = 'none';
     const dB = Math.hypot(marcheur.x - CENTRE_BROUILLARD[0], marcheur.y - CENTRE_BROUILLARD[1]);
     voile.style.opacity = mode === 'pied' ? clamp((dB - (RAYON_BROUILLARD - 16)) / 16, 0, 0.92) : 0;
     if (JEU.repousse > 0) { JEU.repousse -= dt; if (!finAnnonce) annoncer('Le brouillard se referme devant toi et te repousse doucement vers le château…'); }
@@ -1862,7 +1959,7 @@ function lancerJeu() { window.lancerJeuInterne(); }
 function quitterJeu() { window.quitterJeuInterne(); }
 
 // accès direct par ancre (#visite, #moyen-age, #jeu) et API de test
-window.oricourt = { MUSIQUE, renderer, scene, camera, orbite, G, LIEUX, choisir, changerEpoque, passerEnModePied, passerEnModeSurvol, placerMarcheur, marcheur, hauteurSol, data, bloque, marcher, touches, JEU, lancerJeu, THREE };
+window.oricourt = { PUITS, COLOMBIER, SALLE, GAL, MUSIQUE, renderer, scene, camera, orbite, G, LIEUX, choisir, changerEpoque, passerEnModePied, passerEnModeSurvol, placerMarcheur, marcheur, hauteurSol, data, bloque, marcher, touches, JEU, lancerJeu, THREE };
 if (location.hash === '#moyen-age') changerEpoque('medieval');
 if (location.hash === '#jeu') lancerJeu();
 if (location.hash === '#visite') { placerMarcheur([-12, -14, 14]); passerEnModePied(); }
